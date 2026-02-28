@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 
@@ -682,6 +681,17 @@ export default function App() {
                         )}
                         {req.status==="pending" && !isTracked && (
                           <div style={{ display:"flex", gap:8, marginTop:12 }}>
+                            <button onClick={async () => {
+                              const item = getItem(req.item_id);
+                              if (!item || item.available < req.qty) return showToast(`Only ${item?.available||0} available!`,"error");
+                              await supabase.from("requests").update({ status:"approved" }).eq("id", req.id);
+                              await supabase.from("inventory").update({ available: item.available - req.qty }).eq("id", req.item_id);
+                              const ex = assignments.find(x => x.user_id===req.from_user_id && x.item_id===req.item_id);
+                              if (ex) await supabase.from("assignments").update({ qty: ex.qty + req.qty }).eq("id", ex.id);
+                              else await supabase.from("assignments").insert({ item_id:req.item_id, user_id:req.from_user_id, qty:req.qty, assigned_at:today });
+                              await addLog("Approved", currentUser.name, `Approved ${req.qty}× ${item.name} for ${getUser(req.from_user_id)?.name}`);
+                              showToast("Request approved!");
+                            }} style={{ flex:1, background:"#10b981", color:"white", border:"none", borderRadius:8, padding:"9px", cursor:"pointer", fontWeight:700, fontSize:13 }}>✓ Approve</button>
                             <button onClick={() => rejectRequest(req)} style={{ flex:1, background:"#ef4444", color:"white", border:"none", borderRadius:8, padding:"9px", cursor:"pointer", fontWeight:700, fontSize:13 }}>✗ Reject</button>
                           </div>
                         )}
