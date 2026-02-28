@@ -337,7 +337,7 @@ export default function App() {
     <div style={{ minHeight:"100vh", background:BRAND.gradient, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
       <div style={{ background:"white", borderRadius:20, padding:28, width:"100%", maxWidth:420, boxShadow:"0 25px 60px rgba(0,0,0,0.35)" }}>
         <div style={{ textAlign:"center", marginBottom:28 }}>
-          <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}><Logo size={96} /></div>
+          <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}><Logo size={200} /></div>
           <h1 style={{ fontSize:22, fontWeight:800, color:BRAND.darker, margin:0 }}>Office Inventory</h1>
           <p style={{ color:"#6b7280", fontSize:13, marginTop:4 }}>Select your account</p>
         </div>
@@ -421,7 +421,7 @@ export default function App() {
       <div style={{ background:BRAND.gradLight, padding:"10px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, zIndex:50, boxShadow:"0 2px 12px rgba(98,64,204,0.4)" }}>
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <div style={{ width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(255,255,255,0.15)", borderRadius:10, padding:4 }}>
-            <Logo size={28} />
+            <img src="/icon_purple.svg" alt="Icon" style={{ width:28, height:28, objectFit:"contain" }} />
           </div>
           <div>
             <div style={{ color:"white", fontWeight:800, fontSize:15 }}>Office Inventory</div>
