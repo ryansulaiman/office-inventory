@@ -7,341 +7,342 @@
   <meta name="Generator" content="Cocoa HTML Writer">
   <meta name="CocoaVersion" content="2685.3">
   <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; -webkit-text-stroke: #000000}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; -webkit-text-stroke: #000000; min-height: 14.0px}
+    span.s1 {font-kerning: none}
   </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="en"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1">&lt;meta charset="UTF-8" /&gt;</p>
-<p class="p1">&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"/&gt;</p>
-<p class="p1">&lt;title&gt;Office Inventory — Staff Guide&lt;/title&gt;</p>
-<p class="p1">&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>* { margin:0; padding:0; box-sizing:border-box; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>body { font-family: system-ui, -apple-system, sans-serif; background:#0f0f14; color:#f0f0f8; overflow:hidden; height:100vh; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slides { width:100%; height:100vh; position:relative; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slide { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; text-align:center; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slide.active { display:flex; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>/* Nav */</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.nav { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:16px; z-index:100; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.nav button { background:rgba(255,255,255,0.12); border:none; color:white; width:40px; height:40px; border-radius:50%; font-size:18px; cursor:pointer; transition:background .2s; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.nav button:hover { background:rgba(255,255,255,0.25); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.nav button:disabled { opacity:0.3; cursor:default; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.dots { display:flex; gap:8px; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.25); cursor:pointer; transition:all .2s; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.dot.active { background:#6240CC; width:24px; border-radius:99px; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slide-count { position:fixed; top:16px; right:20px; font-size:12px; color:rgba(255,255,255,0.4); font-weight:600; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>/* Gradient backgrounds per slide */</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slide-1<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#2B1575,#3D1F99,#6240CC); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slide-2<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#0f172a,#1e1b4b); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slide-3<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#052e16,#14532d); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slide-4<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#1e1b4b,#312e81); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slide-5<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#431407,#7c2d12); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slide-6<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#1a1a2e,#16213e); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slide-7<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#0c4a6e,#075985); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.slide-8<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#2B1575,#6240CC); }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>/* Typography */</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.tag { background:rgba(255,255,255,0.15); border-radius:99px; padding:6px 16px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:20px; display:inline-block; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>h1 { font-size:clamp(28px,6vw,52px); font-weight:900; line-height:1.1; margin-bottom:16px; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>h2 { font-size:clamp(22px,4vw,36px); font-weight:800; line-height:1.2; margin-bottom:12px; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.subtitle { font-size:clamp(14px,2.5vw,18px); color:rgba(255,255,255,0.7); max-width:560px; line-height:1.6; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.logo { font-size:56px; margin-bottom:20px; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>/* Cards */</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.cards { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:24px; max-width:700px; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.card { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:16px; padding:20px 22px; text-align:left; flex:1; min-width:160px; max-width:200px; backdrop-filter:blur(10px); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.card .icon { font-size:28px; margin-bottom:10px; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.card .label { font-size:13px; font-weight:700; color:rgba(255,255,255,0.9); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.card .desc { font-size:11px; color:rgba(255,255,255,0.55); margin-top:4px; line-height:1.5; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>/* Steps */</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.steps { display:flex; flex-direction:column; gap:14px; max-width:520px; margin-top:20px; text-align:left; width:100%; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.step { display:flex; gap:14px; align-items:flex-start; background:rgba(255,255,255,0.08); border-radius:14px; padding:16px; border:1px solid rgba(255,255,255,0.1); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.step-num { width:32px; height:32px; border-radius:50%; background:#6240CC; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex-shrink:0; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.step-text .title { font-weight:700; font-size:15px; margin-bottom:3px; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.step-text .desc { font-size:13px; color:rgba(255,255,255,0.65); line-height:1.5; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>/* Pills */</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.pills { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:20px; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.pill { background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:99px; padding:8px 18px; font-size:13px; font-weight:600; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.pill.green { background:rgba(16,185,129,0.2); border-color:rgba(16,185,129,0.4); color:#6ee7b7; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.pill.red { background:rgba(239,68,68,0.2); border-color:rgba(239,68,68,0.4); color:#fca5a5; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.pill.yellow { background:rgba(245,158,11,0.2); border-color:rgba(245,158,11,0.4); color:#fcd34d; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.pill.blue { background:rgba(59,130,246,0.2); border-color:rgba(59,130,246,0.4); color:#93c5fd; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>/* Big highlight box */</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.highlight { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:24px 28px; max-width:560px; margin-top:20px; backdrop-filter:blur(10px); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.highlight .big { font-size:clamp(14px,2.5vw,17px); font-weight:600; line-height:1.7; color:rgba(255,255,255,0.9); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.highlight .big span { color:#a78bfa; font-weight:800; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>/* Remember box */</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.remember { background:rgba(98,64,204,0.25); border:1.5px solid rgba(98,64,204,0.5); border-radius:16px; padding:18px 22px; max-width:520px; margin-top:20px; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.remember p { font-size:14px; color:rgba(255,255,255,0.85); line-height:1.7; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.remember p strong { color:#c4b5fd; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>/* Two col */</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.two-col { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:620px; margin-top:20px; width:100%; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.col-card { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:18px; text-align:left; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.col-card .head { font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px; opacity:0.6; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.col-card ul { list-style:none; display:flex; flex-direction:column; gap:8px; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.col-card ul li { font-size:13px; color:rgba(255,255,255,0.85); display:flex; gap:8px; align-items:flex-start; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.col-card ul li::before { content:"✓"; color:#34d399; font-weight:800; flex-shrink:0; }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>.col-card ul li.no::before { content:"✗"; color:#f87171; }</p>
-<p class="p1">&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;div class="slide-count" id="slideCount"&gt;1 / 8&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;div class="slides"&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 1: Cover --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-1 active"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="logo"&gt;📦&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Staff Guide&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;h1&gt;Office Inventory App&lt;/h1&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;A simple guide to requesting devices, transferring items, and reporting incidents — everything you need to know.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 2: How to Log In --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-2"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Step 1&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;h2&gt;How to Log In&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;No passwords needed — just your PIN.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="steps"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;1&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Open the app&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Go to the app link shared by your admin on your phone or computer browser.&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;2&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Tap your name&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;You'll see a list of all staff — tap your own name.&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;3&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Enter your 4-digit PIN&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Type your PIN using the number pad. You're in!&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 3: Requesting a Device --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-3"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Requesting&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;h2&gt;How to Request a Device&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;Need a phone, laptop, or any item? Here's how.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="steps"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;1&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Go to "Request" tab&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Tap the 📋 Request tab at the bottom of the screen.&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;2&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Tap "+ New Request"&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Choose the item, enter the quantity, and set an expected return date if you know it.&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;3&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Wait for approval&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Your Inventory Assistant will review and assign the exact unit (e.g. PHN-001) to you.&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 4: My Items --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-4"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;My Items&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;h2&gt;Viewing Your Assigned Items&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;See everything that's assigned to you in one place.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="highlight"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;p class="big"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>Go to the &lt;span&gt;🎒 My Items&lt;/span&gt; tab to see all your devices and items.&lt;br/&gt;&lt;br/&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>Each device shows its &lt;span&gt;unit code&lt;/span&gt; (e.g. PHN-001), the date it was assigned, and its &lt;span&gt;return due date&lt;/span&gt;.&lt;br/&gt;&lt;br/&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>If your return date has passed, it will show a red &lt;span&gt;⚠️ OVERDUE&lt;/span&gt; warning — please return or request an extension!</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="pills" style="margin-top:18px;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;span class="pill green"&gt;✅ Assigned&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;span class="pill yellow"&gt;⏰ Due Soon&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;span class="pill red"&gt;⚠️ Overdue&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 5: Returning a Device --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-5"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Returning&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;h2&gt;How to Return a Device&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;You cannot return a device yourself — here's what to do.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="highlight"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;p class="big"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;span&gt;Physically hand the device&lt;/span&gt; back to your Inventory Assistant.&lt;br/&gt;&lt;br/&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>They will process the return in the app on their end — the device will then be marked as available again.&lt;br/&gt;&lt;br/&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>You do &lt;span&gt;not&lt;/span&gt; need to do anything in the app to return a device.</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="remember"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;p&gt;💡 &lt;strong&gt;Need more time?&lt;/strong&gt; Go to 🎒 My Items, tap &lt;strong&gt;"📅 Request Extension"&lt;/strong&gt; on the device, enter a new date and a reason. Your assistant will approve or deny it.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 6: Transferring --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-6"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Transfers&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;h2&gt;Transferring a Device to a Workmate&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;Need to pass your device to someone else? Easy.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="steps"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;1&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Go to "My Items" tab&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Find the device you want to transfer.&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;2&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Tap "🔄 Transfer"&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Select one or more devices, then choose which workmate to send them to. Add a note if needed.&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;3&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Workmate accepts or declines&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;They'll see a notification in their 🔄 Transfer tab and can accept or decline.&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 7: Reporting --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-7"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Incidents&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;h2&gt;Reporting a Damaged or Lost Device&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;Accidents happen — here's how to report them quickly.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="steps"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;1&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Go to "Report" tab ⚠️&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Tap the Report tab at the bottom of your screen.&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;2&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Tap "+ Report Damaged / Lost"&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Choose the device, select whether it's damaged or lost, and describe what happened.&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;3&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Submit&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Your Inventory Assistant will be notified and will handle the resolution.&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 8: Summary --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Summary&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;h2&gt;Quick Reference&lt;/h2&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;Everything at a glance.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="two-col"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="col-card"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="head"&gt;✅ You Can&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;ul&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;li&gt;Request any item or device&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;li&gt;See all your assigned items&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;li&gt;Transfer devices to workmates&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;li&gt;Request a return date extension&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;li&gt;Report damaged or lost devices&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;li&gt;Accept or decline transfers&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/ul&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="col-card"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="head"&gt;🚫 You Cannot&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;ul&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;li class="no"&gt;Return devices yourself in the app&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;li class="no"&gt;Approve your own requests&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;li class="no"&gt;See other staff's items&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;li class="no"&gt;Edit inventory or add items&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;li class="no"&gt;Resolve incidents yourself&lt;/li&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/ul&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="remember" style="margin-top:16px;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;p&gt;❓ Questions? Contact your &lt;strong&gt;Inventory Assistant&lt;/strong&gt; or &lt;strong&gt;Admin&lt;/strong&gt; directly.&lt;/p&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;!-- Navigation --&gt;</p>
-<p class="p1">&lt;div class="nav"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;button id="prev" onclick="changeSlide(-1)" disabled&gt;‹&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="dots" id="dots"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;button id="next" onclick="changeSlide(1)"&gt;›&lt;/button&gt;</p>
-<p class="p1">&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>let current = 0;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const slides = document.querySelectorAll('.slide');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const total = slides.length;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const dotsEl = document.getElementById('dots');</p>
-<p class="p1"><span class="Apple-converted-space">  </span>const countEl = document.getElementById('slideCount');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Build dots</p>
-<p class="p1"><span class="Apple-converted-space">  </span>slides.forEach((_,i) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const d = document.createElement('div');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>d.className = 'dot' + (i===0?' active':'');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>d.onclick = () =&gt; goTo(i);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>dotsEl.appendChild(d);</p>
-<p class="p1"><span class="Apple-converted-space">  </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function goTo(n) {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>slides[current].classList.remove('active');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>dotsEl.children[current].classList.remove('active');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>current = n;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>slides[current].classList.add('active');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>dotsEl.children[current].classList.add('active');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>document.getElementById('prev').disabled = current === 0;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>document.getElementById('next').disabled = current === total - 1;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>countEl.textContent = `${current+1} / ${total}`;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>function changeSlide(dir) { goTo(current + dir); }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>// Keyboard navigation</p>
-<p class="p1"><span class="Apple-converted-space">  </span>document.addEventListener('keydown', e =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (e.key==='ArrowRight'||e.key==='ArrowDown') { if(current&lt;total-1) changeSlide(1); }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>if (e.key==='ArrowLeft'||e.key==='ArrowUp') { if(current&gt;0) changeSlide(-1); }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>});</p>
-<p class="p1">&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+<p class="p1"><span class="s1">&lt;!DOCTYPE html&gt;</span></p>
+<p class="p1"><span class="s1">&lt;html lang="en"&gt;</span></p>
+<p class="p1"><span class="s1">&lt;head&gt;</span></p>
+<p class="p1"><span class="s1">&lt;meta charset="UTF-8" /&gt;</span></p>
+<p class="p1"><span class="s1">&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"/&gt;</span></p>
+<p class="p1"><span class="s1">&lt;title&gt;Office Inventory — Staff Guide&lt;/title&gt;</span></p>
+<p class="p1"><span class="s1">&lt;style&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>* { margin:0; padding:0; box-sizing:border-box; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>body { font-family: system-ui, -apple-system, sans-serif; background:#0f0f14; color:#f0f0f8; overflow:hidden; height:100vh; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slides { width:100%; height:100vh; position:relative; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slide { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; text-align:center; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slide.active { display:flex; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>/* Nav */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.nav { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:16px; z-index:100; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.nav button { background:rgba(255,255,255,0.12); border:none; color:white; width:40px; height:40px; border-radius:50%; font-size:18px; cursor:pointer; transition:background .2s; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.nav button:hover { background:rgba(255,255,255,0.25); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.nav button:disabled { opacity:0.3; cursor:default; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.dots { display:flex; gap:8px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.25); cursor:pointer; transition:all .2s; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.dot.active { background:#6240CC; width:24px; border-radius:99px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slide-count { position:fixed; top:16px; right:20px; font-size:12px; color:rgba(255,255,255,0.4); font-weight:600; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>/* Gradient backgrounds per slide */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slide-1<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#2B1575,#3D1F99,#6240CC); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slide-2<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#0f172a,#1e1b4b); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slide-3<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#052e16,#14532d); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slide-4<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#1e1b4b,#312e81); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slide-5<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#431407,#7c2d12); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slide-6<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#1a1a2e,#16213e); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slide-7<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#0c4a6e,#075985); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.slide-8<span class="Apple-converted-space">  </span>{ background: linear-gradient(135deg,#2B1575,#6240CC); }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>/* Typography */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.tag { background:rgba(255,255,255,0.15); border-radius:99px; padding:6px 16px; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:20px; display:inline-block; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>h1 { font-size:clamp(28px,6vw,52px); font-weight:900; line-height:1.1; margin-bottom:16px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>h2 { font-size:clamp(22px,4vw,36px); font-weight:800; line-height:1.2; margin-bottom:12px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.subtitle { font-size:clamp(14px,2.5vw,18px); color:rgba(255,255,255,0.7); max-width:560px; line-height:1.6; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.logo { font-size:56px; margin-bottom:20px; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>/* Cards */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.cards { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:24px; max-width:700px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.card { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); border-radius:16px; padding:20px 22px; text-align:left; flex:1; min-width:160px; max-width:200px; backdrop-filter:blur(10px); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.card .icon { font-size:28px; margin-bottom:10px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.card .label { font-size:13px; font-weight:700; color:rgba(255,255,255,0.9); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.card .desc { font-size:11px; color:rgba(255,255,255,0.55); margin-top:4px; line-height:1.5; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>/* Steps */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.steps { display:flex; flex-direction:column; gap:14px; max-width:520px; margin-top:20px; text-align:left; width:100%; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.step { display:flex; gap:14px; align-items:flex-start; background:rgba(255,255,255,0.08); border-radius:14px; padding:16px; border:1px solid rgba(255,255,255,0.1); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.step-num { width:32px; height:32px; border-radius:50%; background:#6240CC; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; flex-shrink:0; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.step-text .title { font-weight:700; font-size:15px; margin-bottom:3px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.step-text .desc { font-size:13px; color:rgba(255,255,255,0.65); line-height:1.5; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>/* Pills */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.pills { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:20px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.pill { background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); border-radius:99px; padding:8px 18px; font-size:13px; font-weight:600; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.pill.green { background:rgba(16,185,129,0.2); border-color:rgba(16,185,129,0.4); color:#6ee7b7; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.pill.red { background:rgba(239,68,68,0.2); border-color:rgba(239,68,68,0.4); color:#fca5a5; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.pill.yellow { background:rgba(245,158,11,0.2); border-color:rgba(245,158,11,0.4); color:#fcd34d; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.pill.blue { background:rgba(59,130,246,0.2); border-color:rgba(59,130,246,0.4); color:#93c5fd; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>/* Big highlight box */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.highlight { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); border-radius:20px; padding:24px 28px; max-width:560px; margin-top:20px; backdrop-filter:blur(10px); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.highlight .big { font-size:clamp(14px,2.5vw,17px); font-weight:600; line-height:1.7; color:rgba(255,255,255,0.9); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.highlight .big span { color:#a78bfa; font-weight:800; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>/* Remember box */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.remember { background:rgba(98,64,204,0.25); border:1.5px solid rgba(98,64,204,0.5); border-radius:16px; padding:18px 22px; max-width:520px; margin-top:20px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.remember p { font-size:14px; color:rgba(255,255,255,0.85); line-height:1.7; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.remember p strong { color:#c4b5fd; }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>/* Two col */</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.two-col { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:620px; margin-top:20px; width:100%; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.col-card { background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:16px; padding:18px; text-align:left; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.col-card .head { font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px; opacity:0.6; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.col-card ul { list-style:none; display:flex; flex-direction:column; gap:8px; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.col-card ul li { font-size:13px; color:rgba(255,255,255,0.85); display:flex; gap:8px; align-items:flex-start; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.col-card ul li::before { content:"✓"; color:#34d399; font-weight:800; flex-shrink:0; }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>.col-card ul li.no::before { content:"✗"; color:#f87171; }</span></p>
+<p class="p1"><span class="s1">&lt;/style&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/head&gt;</span></p>
+<p class="p1"><span class="s1">&lt;body&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1">&lt;div class="slide-count" id="slideCount"&gt;1 / 8&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1">&lt;div class="slides"&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 1: Cover --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-1 active"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="logo"&gt;📦&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Staff Guide&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;h1&gt;Office Inventory App&lt;/h1&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;A simple guide to requesting devices, transferring items, and reporting incidents — everything you need to know.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 2: How to Log In --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-2"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Step 1&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;h2&gt;How to Log In&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;No passwords needed — just your PIN.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="steps"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;1&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Open the app&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Go to the app link shared by your admin on your phone or computer browser.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;2&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Tap your name&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;You'll see a list of all staff — tap your own name.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;3&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Enter your 4-digit PIN&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Type your PIN using the number pad. You're in!&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 3: Requesting a Device --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-3"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Requesting&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;h2&gt;How to Request a Device&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;Need a phone, laptop, or any item? Here's how.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="steps"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;1&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Go to "Request" tab&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Tap the 📋 Request tab at the bottom of the screen.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;2&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Tap "+ New Request"&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Choose the item, enter the quantity, and set an expected return date if you know it.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;3&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Wait for approval&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Your Inventory Assistant will review and assign the exact unit (e.g. PHN-001) to you.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 4: My Items --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-4"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;My Items&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;h2&gt;Viewing Your Assigned Items&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;See everything that's assigned to you in one place.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="highlight"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;p class="big"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>Go to the &lt;span&gt;🎒 My Items&lt;/span&gt; tab to see all your devices and items.&lt;br/&gt;&lt;br/&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>Each device shows its &lt;span&gt;unit code&lt;/span&gt; (e.g. PHN-001), the date it was assigned, and its &lt;span&gt;return due date&lt;/span&gt;.&lt;br/&gt;&lt;br/&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>If your return date has passed, it will show a red &lt;span&gt;⚠️ OVERDUE&lt;/span&gt; warning — please return or request an extension!</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="pills" style="margin-top:18px;"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;span class="pill green"&gt;✅ Assigned&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;span class="pill yellow"&gt;⏰ Due Soon&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;span class="pill red"&gt;⚠️ Overdue&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 5: Returning a Device --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-5"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Returning&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;h2&gt;How to Return a Device&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;You cannot return a device yourself — here's what to do.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="highlight"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;p class="big"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;span&gt;Physically hand the device&lt;/span&gt; back to your Inventory Assistant.&lt;br/&gt;&lt;br/&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>They will process the return in the app on their end — the device will then be marked as available again.&lt;br/&gt;&lt;br/&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>You do &lt;span&gt;not&lt;/span&gt; need to do anything in the app to return a device.</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="remember"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;p&gt;💡 &lt;strong&gt;Need more time?&lt;/strong&gt; Go to 🎒 My Items, tap &lt;strong&gt;"📅 Request Extension"&lt;/strong&gt; on the device, enter a new date and a reason. Your assistant will approve or deny it.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 6: Transferring --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-6"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Transfers&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;h2&gt;Transferring a Device to a Workmate&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;Need to pass your device to someone else? Easy.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="steps"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;1&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Go to "My Items" tab&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Find the device you want to transfer.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;2&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Tap "🔄 Transfer"&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Select one or more devices, then choose which workmate to send them to. Add a note if needed.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;3&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Workmate accepts or declines&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;They'll see a notification in their 🔄 Transfer tab and can accept or decline.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 7: Reporting --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-7"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Incidents&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;h2&gt;Reporting a Damaged or Lost Device&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;Accidents happen — here's how to report them quickly.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="steps"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;1&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Go to "Report" tab ⚠️&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Tap the Report tab at the bottom of your screen.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;2&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Tap "+ Report Damaged / Lost"&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Choose the device, select whether it's damaged or lost, and describe what happened.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="step"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-num"&gt;3&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="step-text"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Submit&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="desc"&gt;Your Inventory Assistant will be notified and will handle the resolution.&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- SLIDE 8: Summary --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="slide slide-8"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="tag"&gt;Summary&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;h2&gt;Quick Reference&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;p class="subtitle"&gt;Everything at a glance.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="two-col"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="col-card"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="head"&gt;✅ You Can&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;ul&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;li&gt;Request any item or device&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;li&gt;See all your assigned items&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;li&gt;Transfer devices to workmates&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;li&gt;Request a return date extension&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;li&gt;Report damaged or lost devices&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;li&gt;Accept or decline transfers&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/ul&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="col-card"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="head"&gt;🚫 You Cannot&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;ul&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;li class="no"&gt;Return devices yourself in the app&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;li class="no"&gt;Approve your own requests&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;li class="no"&gt;See other staff's items&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;li class="no"&gt;Edit inventory or add items&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;li class="no"&gt;Resolve incidents yourself&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/ul&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="remember" style="margin-top:16px;"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;p&gt;❓ Questions? Contact your &lt;strong&gt;Inventory Assistant&lt;/strong&gt; or &lt;strong&gt;Admin&lt;/strong&gt; directly.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1">&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1">&lt;!-- Navigation --&gt;</span></p>
+<p class="p1"><span class="s1">&lt;div class="nav"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;button id="prev" onclick="changeSlide(-1)" disabled&gt;‹&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="dots" id="dots"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;button id="next" onclick="changeSlide(1)"&gt;›&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1">&lt;script&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>let current = 0;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const slides = document.querySelectorAll('.slide');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const total = slides.length;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const dotsEl = document.getElementById('dots');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>const countEl = document.getElementById('slideCount');</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>// Build dots</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>slides.forEach((_,i) =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>const d = document.createElement('div');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>d.className = 'dot' + (i===0?' active':'');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>d.onclick = () =&gt; goTo(i);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>dotsEl.appendChild(d);</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>});</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>function goTo(n) {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>slides[current].classList.remove('active');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>dotsEl.children[current].classList.remove('active');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>current = n;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>slides[current].classList.add('active');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>dotsEl.children[current].classList.add('active');</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>document.getElementById('prev').disabled = current === 0;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>document.getElementById('next').disabled = current === total - 1;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>countEl.textContent = `${current+1} / ${total}`;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>function changeSlide(dir) { goTo(current + dir); }</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>// Keyboard navigation</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>document.addEventListener('keydown', e =&gt; {</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>if (e.key==='ArrowRight'||e.key==='ArrowDown') { if(current&lt;total-1) changeSlide(1); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>if (e.key==='ArrowLeft'||e.key==='ArrowUp') { if(current&gt;0) changeSlide(-1); }</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>});</span></p>
+<p class="p1"><span class="s1">&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/body&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/html&gt;</span></p>
 </body>
 </html>
