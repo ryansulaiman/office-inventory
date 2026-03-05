@@ -237,22 +237,25 @@ export default function App() {
 
   // ── TRANSFERS (Staff peer-to-peer) ─────────────────────────────────────────
   const submitTransfer = async () => {
-    const { unitId, toUserId, note } = form;
-    if (!unitId || !toUserId) return showToast("Fill in all fields","error");
-    const unit = getUnit(Number(unitId));
-    if (!unit) return showToast("Unit not found","error");
-    await supabase.from("transfers").insert({
-      from_user_id: currentUser.id,
-      to_user_id: Number(toUserId),
-      item_id: unit.item_id,
-      qty: 1,
-      status: "pending",
-      note: note||"",
-      date: today,
-      unit_id: unit.id,
-    });
-    await addLog("Transfer Sent", currentUser.name, `Sent ${unit.unit_code} → ${getUser(Number(toUserId))?.name}`);
-    setModal(null); setForm({}); showToast("Transfer request sent!");
+    const { selectedUnitIds, toUserId, note } = form;
+    if (!selectedUnitIds || selectedUnitIds.length === 0 || !toUserId) return showToast("Fill in all fields","error");
+    for (const uid of selectedUnitIds) {
+      const unit = getUnit(Number(uid));
+      if (!unit) continue;
+      await supabase.from("transfers").insert({
+        from_user_id: currentUser.id,
+        to_user_id: Number(toUserId),
+        item_id: unit.item_id,
+        qty: 1,
+        status: "pending",
+        note: note||"",
+        date: today,
+        unit_id: unit.id,
+      });
+    }
+    const codes = selectedUnitIds.map(uid => getUnit(Number(uid))?.unit_code).join(", ");
+    await addLog("Transfer Sent", currentUser.name, `Sent ${codes} → ${getUser(Number(toUserId))?.name}`);
+    setModal(null); setForm({}); showToast(`${selectedUnitIds.length} device${selectedUnitIds.length>1?"s":""} transfer request sent!`);
   };
 
   const acceptTransfer = async (t) => {
@@ -520,7 +523,7 @@ export default function App() {
   const staffTabs = [
     { id:"dashboard",label:"My Items",icon:"🎒",badge:myOverdue },
     { id:"request",label:"Request",icon:"📋" },
-    { id:"transfers",label:"Transfers",icon:"🔄",badge:myPendingTransfers },
+    { id:"transfers",label:"Transfer",icon:"🔄",badge:myPendingTransfers },
     { id:"report",label:"Report",icon:"⚠️" },
   ];
   const tabs = isAdmin ? adminTabs : isAssistant ? assistantTabs : staffTabs;
@@ -1204,27 +1207,38 @@ export default function App() {
         <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:200 }} onClick={() => setModal(null)}>
           <div style={{ background:"var(--modal-bg)",borderRadius:"20px 20px 0 0",padding:"24px 24px 32px",width:"100%",maxWidth:500,maxHeight:"85vh",overflowY:"auto" }} onClick={e=>e.stopPropagation()}>
 
-            {/* TRANSFER — staff picks their device and a workmate */}
+            {/* TRANSFER — staff picks multiple devices and a workmate */}
             {modal==="transfer"&&<>
-              <h3 style={{ margin:"0 0 4px",fontWeight:800,fontSize:18,color:"var(--text)" }}>Transfer Device to Workmate</h3>
-              <p style={{ color:"var(--text3)",fontSize:13,margin:"0 0 12px" }}>Choose one of your devices and who you want to send it to.</p>
-              <label style={lbl}>Which device do you want to transfer?</label>
+              <h3 style={{ margin:"0 0 4px",fontWeight:800,fontSize:18,color:"var(--text)" }}>Transfer Devices to Workmate</h3>
+              <p style={{ color:"var(--text3)",fontSize:13,margin:"0 0 12px" }}>Select one or more devices and choose who to send them to.</p>
+              <label style={lbl}>Select devices to transfer</label>
               <div style={{ display:"flex",flexDirection:"column",gap:8,marginTop:6 }}>
                 {myUnitAssignments.length===0&&<div style={{ color:"var(--text4)",fontSize:13 }}>You have no devices to transfer.</div>}
                 {myUnitAssignments.map(ua => {
                   const unit = getUnit(ua.unit_id);
                   const item = unit ? getItem(unit.item_id) : null;
-                  const isChosen = form.unitId===String(unit?.id);
+                  const selected = (form.selectedUnitIds||[]).includes(String(unit?.id));
                   return (
-                    <button key={ua.id} onClick={() => setForm(f=>({...f,unitId:String(unit.id)}))}
-                      style={{ display:"flex",alignItems:"center",gap:12,padding:"12px 14px",border:`2px solid ${isChosen?BRAND.primary:"var(--border)"}`,borderRadius:12,background:isChosen?BRAND.pale:"var(--surface2)",cursor:"pointer",textAlign:"left" }}>
+                    <button key={ua.id} onClick={() => {
+                      const cur = form.selectedUnitIds||[];
+                      const id = String(unit.id);
+                      setForm(f=>({...f, selectedUnitIds: selected ? cur.filter(x=>x!==id) : [...cur, id]}));
+                    }}
+                      style={{ display:"flex",alignItems:"center",gap:12,padding:"12px 14px",border:`2px solid ${selected?BRAND.primary:"var(--border)"}`,borderRadius:12,background:selected?BRAND.pale:"var(--surface2)",cursor:"pointer",textAlign:"left" }}>
+                      <div style={{ width:22,height:22,borderRadius:6,border:`2px solid ${selected?BRAND.primary:"var(--border)"}`,background:selected?BRAND.primary:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                        {selected&&<span style={{ color:"white",fontSize:14,fontWeight:800 }}>✓</span>}
+                      </div>
                       <div style={{ fontWeight:800,fontSize:15,color:BRAND.primary,fontFamily:"monospace" }}>📱 {unit?.unit_code}</div>
                       <div style={{ fontSize:13,color:"var(--text2)" }}>{item?.name}</div>
-                      {isChosen&&<span style={{ marginLeft:"auto",fontSize:18 }}>✓</span>}
                     </button>
                   );
                 })}
               </div>
+              {(form.selectedUnitIds||[]).length > 0 && (
+                <div style={{ marginTop:8,fontSize:12,color:BRAND.primary,fontWeight:600 }}>
+                  {(form.selectedUnitIds||[]).length} device{(form.selectedUnitIds||[]).length>1?"s":""} selected
+                </div>
+              )}
               <label style={lbl}>Transfer to</label>
               <select style={inp} value={form.toUserId||""} onChange={e => setForm(f=>({...f,toUserId:e.target.value}))}>
                 <option value="">Choose a workmate...</option>
@@ -1232,7 +1246,7 @@ export default function App() {
               </select>
               <label style={lbl}>Note (optional)</label>
               <input style={inp} value={form.note||""} onChange={e => setForm(f=>({...f,note:e.target.value}))} placeholder="e.g. Temporary loan while mine is being fixed" />
-              <button onClick={submitTransfer} disabled={!form.unitId||!form.toUserId} style={{ ...btn,opacity:(!form.unitId||!form.toUserId)?0.5:1 }}>Send Transfer Request</button>
+              <button onClick={submitTransfer} disabled={!(form.selectedUnitIds||[]).length||!form.toUserId} style={{ ...btn,opacity:(!(form.selectedUnitIds||[]).length||!form.toUserId)?0.5:1 }}>Send Transfer Request</button>
             </>}
 
             {/* EXTENSION REQUEST */}
