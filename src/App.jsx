@@ -223,6 +223,38 @@ export default function App() {
     showToast(`${unit?.unit_code} returned!`);
   };
 
+  const returnAllForUser = async (userId) => {
+    const userUAs = unitAssignments.filter(ua => ua.user_id === userId && ua.status === "active");
+    const userAssigns = assignments.filter(a => a.user_id === userId);
+    for (const ua of userUAs) {
+      await supabase.from("unit_assignments").update({ status:"returned", returned_at:today }).eq("id", ua.id);
+      await supabase.from("units").update({ status:"available" }).eq("id", ua.unit_id);
+    }
+    for (const a of userAssigns) {
+      const item = getItem(a.item_id);
+      await supabase.from("inventory").update({ available: item.available + a.qty }).eq("id", a.item_id);
+      await supabase.from("assignments").delete().eq("id", a.id);
+    }
+    const u = getUser(userId);
+    await addLog("Return All", currentUser.name, `All items returned by ${u?.name}`);
+    showToast(`All items returned for ${u?.name}!`);
+  };
+
+  const returnQtyItem = async (assignmentId, userId, itemId, qtyToReturn) => {
+    const item = getItem(itemId);
+    const assign = assignments.find(a => a.id === assignmentId);
+    if (!assign) return;
+    const newQty = assign.qty - qtyToReturn;
+    if (newQty <= 0) {
+      await supabase.from("assignments").delete().eq("id", assignmentId);
+    } else {
+      await supabase.from("assignments").update({ qty: newQty }).eq("id", assignmentId);
+    }
+    await supabase.from("inventory").update({ available: item.available + qtyToReturn }).eq("id", itemId);
+    await addLog("Item Returned", currentUser.name, `${qtyToReturn}× ${item?.name} returned by ${getUser(userId)?.name}`);
+    showToast(`${qtyToReturn}× ${item?.name} returned!`);
+  };
+
   const reportUnitIncident = async () => {
     const { unitId, type, note, reportedBy } = form;
     if (!unitId || !type) return showToast("Fill in all fields","error");
@@ -695,7 +727,66 @@ export default function App() {
               <h2 style={{ fontWeight:800,color:"var(--text)",margin:0,fontSize:20 }}>Device Tracker</h2>
               <button onClick={() => { setModal("generateUnits"); setForm({}); }} style={{ background:BRAND.primary,color:"white",border:"none",borderRadius:10,padding:"8px 14px",fontSize:13,cursor:"pointer",fontWeight:700 }}>+ Add Units</button>
             </div>
-            <input style={{ ...inp,marginBottom:14 }} placeholder="🔍 Search unit code or person..." value={searchQ} onChange={e => setSearchQ(e.target.value)} />
+            <input style={{ ...inp,marginBottom:14 }} placeholder="🔍 Filter by unit code or person name..." value={searchQ} onChange={e => setSearchQ(e.target.value)} />
+
+            {/* Return All button — shown when filtering by a person */}
+            {(() => {
+              if (!searchQ) return null;
+              const matchedUser = users.find(u => u.name.toLowerCase().includes(searchQ.toLowerCase()));
+              if (!matchedUser) return null;
+              const theirUAs = unitAssignments.filter(ua => ua.user_id === matchedUser.id && ua.status === "active");
+              const theirAssigns = assignments.filter(a => a.user_id === matchedUser.id);
+              if (theirUAs.length === 0 && theirAssigns.length === 0) return null;
+              return (
+                <div style={{ background:"#fef2f2",border:"1.5px solid #fca5a5",borderRadius:12,padding:"12px 14px",marginBottom:14,display:"flex",alignItems:"center",justifyContent:"space-between",gap:10 }}>
+                  <div>
+                    <div style={{ fontWeight:700,fontSize:13,color:"#b91c1c" }}>Showing items for <strong>{matchedUser.name}</strong></div>
+                    <div style={{ fontSize:12,color:"#991b1b" }}>{theirUAs.length} device{theirUAs.length!==1?"s":""} + {theirAssigns.length} item type{theirAssigns.length!==1?"s":""} assigned</div>
+                  </div>
+                  <button onClick={() => setConfirmAction({ type:"returnAll", userId:matchedUser.id, name:matchedUser.name })}
+                    style={{ background:"#ef4444",color:"white",border:"none",borderRadius:8,padding:"8px 14px",fontSize:12,cursor:"pointer",fontWeight:700,whiteSpace:"nowrap" }}>
+                    ↩ Return All
+                  </button>
+                </div>
+              );
+            })()}
+
+            {/* Quantity-only item assignments */}
+            {assignments.filter(a => {
+              const u = getUser(a.user_id);
+              return searchQ===""||u?.name.toLowerCase().includes(searchQ.toLowerCase());
+            }).length > 0 && (
+              <div>
+                <SectionLabel label="Quantity Items" />
+                {assignments.filter(a => {
+                  const u = getUser(a.user_id);
+                  return searchQ===""||u?.name.toLowerCase().includes(searchQ.toLowerCase());
+                }).map(a => {
+                  const item = getItem(a.item_id);
+                  const assignedUser = getUser(a.user_id);
+                  return (
+                    <Card key={a.id} style={{ padding:"12px 14px" }}>
+                      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+                        <div style={{ display:"flex",alignItems:"center",gap:10 }}>
+                          <div style={{ background:"#f3f4f6",borderRadius:10,padding:"8px 12px",fontWeight:800,fontSize:14,color:"var(--text2)" }}>📦</div>
+                          <div>
+                            <div style={{ fontWeight:700,fontSize:14,color:"var(--text)" }}>{item?.name}</div>
+                            <div style={{ display:"flex",alignItems:"center",gap:6,marginTop:4 }}>
+                              <Avatar user={assignedUser} size={22} />
+                              <div style={{ fontSize:12,color:"var(--text3)" }}>{assignedUser?.name} · <strong>×{a.qty} {item?.unit}</strong></div>
+                            </div>
+                          </div>
+                        </div>
+                        <button onClick={() => { setModal("returnQty"); setForm({ assignmentId:String(a.id), userId:String(a.user_id), itemId:String(a.item_id), maxQty:a.qty, returnQty:String(a.qty) }); }}
+                          style={{ background:"#fef3c7",color:"#92400e",border:"none",borderRadius:8,padding:"6px 12px",fontSize:12,cursor:"pointer",fontWeight:700 }}>↩ Return</button>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Tracked units */}
             {inventory.filter(item => units.some(u=>u.item_id===item.id)).map(item => {
               const itemUnits = units.filter(u => u.item_id===item.id && (
                 searchQ===""||u.unit_code.toLowerCase().includes(searchQ.toLowerCase())||
@@ -745,7 +836,7 @@ export default function App() {
                 </div>
               );
             })}
-            {units.length===0 && <div style={{ color:"var(--text4)",textAlign:"center",marginTop:60 }}>No tracked units yet.</div>}
+            {units.length===0 && assignments.length===0 && <div style={{ color:"var(--text4)",textAlign:"center",marginTop:60 }}>No tracked units yet.</div>}
           </div>
         )}
 
@@ -923,6 +1014,7 @@ export default function App() {
             {users.map(u => {
               const theirUnitAs = unitAssignments.filter(a=>a.user_id===u.id&&a.status==="active");
               const theirItems = assignments.filter(a=>a.user_id===u.id);
+              const hasItems = theirUnitAs.length > 0 || theirItems.length > 0;
               return (
                 <Card key={u.id}>
                   <div style={{ display:"flex",gap:12,alignItems:"flex-start" }}>
@@ -942,12 +1034,16 @@ export default function App() {
                       )}
                       {theirItems.length > 0 && (
                         <div style={{ display:"flex",flexWrap:"wrap",gap:4,marginTop:4 }}>
-                          {theirItems.map(a=><span key={a.id} style={{ background:"var(--surface2)",color:"var(--text2)",borderRadius:99,padding:"2px 8px",fontSize:11 }}>{getItem(a.item_id)?.name} ×{a.qty}</span>)}
+                          {theirItems.map(a=><span key={a.id} style={{ background:"var(--surface2)",color:"var(--text2)",borderRadius:99,padding:"2px 8px",fontSize:11 }}>📦 {getItem(a.item_id)?.name} ×{a.qty}</span>)}
                         </div>
                       )}
-                      {theirUnitAs.length===0&&theirItems.length===0&&<div style={{ fontSize:12,color:"var(--text4)",marginTop:4 }}>No items assigned</div>}
+                      {!hasItems && <div style={{ fontSize:12,color:"var(--text4)",marginTop:4 }}>No items assigned</div>}
                     </div>
                     <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
+                      {hasItems && (
+                        <button onClick={() => setConfirmAction({ type:"returnAll", userId:u.id, name:u.name })}
+                          style={{ background:"#fef3c7",color:"#92400e",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>↩ Return All</button>
+                      )}
                       <button onClick={() => { setModal("changeRole"); setForm({ targetUserId:String(u.id),targetName:u.name,newRole:u.role }); }} style={{ background:BRAND.pale,color:BRAND.dark,border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>✏️ Role</button>
                       <button onClick={() => { setModal("changePin"); setForm({ targetUserId:String(u.id),targetName:u.name }); }} style={{ background:"#fef3c7",color:"#92400e",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>🔑 PIN</button>
                       {u.role!=="admin"&&<button onClick={() => setConfirmAction({ type:"removeUser",uid:u.id,name:u.name })} style={{ background:"#fee2e2",color:"#ef4444",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>Remove</button>}
@@ -1024,7 +1120,7 @@ export default function App() {
                   <div style={{ display:"flex",gap:8,marginTop:10 }}>
                     <button onClick={() => { setModal("transfer"); setForm({ unitId:String(unit.id) }); }}
                       style={{ flex:1,background:BRAND.pale,color:BRAND.primary,border:`1.5px solid ${BRAND.light}`,borderRadius:8,padding:"8px",cursor:"pointer",fontWeight:700,fontSize:12 }}>
-                      🔄 Transfer to Workmate
+                      🔄 Transfer
                     </button>
                     {!myPendingExt && (
                       <button onClick={() => { setModal("extension"); setForm({ uaId:String(ua.id) }); }}
@@ -1191,12 +1287,25 @@ export default function App() {
       {confirmAction&&(
         <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:300,padding:16 }} onClick={() => setConfirmAction(null)}>
           <div style={{ background:"var(--modal-bg)",borderRadius:18,padding:24,width:"100%",maxWidth:360 }} onClick={e=>e.stopPropagation()}>
-            <div style={{ fontSize:36,textAlign:"center",marginBottom:12 }}>⚠️</div>
-            <div style={{ fontWeight:800,fontSize:17,textAlign:"center",marginBottom:8,color:"var(--text)" }}>{confirmAction.type==="deleteItem"?`Delete "${confirmAction.name}"?`:`Remove ${confirmAction.name}?`}</div>
-            <div style={{ fontSize:13,color:"var(--text3)",textAlign:"center",marginBottom:20 }}>This cannot be undone.</div>
+            <div style={{ fontSize:36,textAlign:"center",marginBottom:12 }}>{confirmAction.type==="returnAll"?"↩️":"⚠️"}</div>
+            <div style={{ fontWeight:800,fontSize:17,textAlign:"center",marginBottom:8,color:"var(--text)" }}>
+              {confirmAction.type==="returnAll" ? `Return all items from ${confirmAction.name}?` :
+               confirmAction.type==="deleteItem" ? `Delete "${confirmAction.name}"?` :
+               `Remove ${confirmAction.name}?`}
+            </div>
+            <div style={{ fontSize:13,color:"var(--text3)",textAlign:"center",marginBottom:20 }}>
+              {confirmAction.type==="returnAll" ? "This will mark all their devices and items as returned and add them back to stock." : "This cannot be undone."}
+            </div>
             <div style={{ display:"flex",gap:10 }}>
               <button onClick={() => setConfirmAction(null)} style={{ flex:1,background:"var(--surface2)",color:"var(--text2)",border:"none",borderRadius:10,padding:"11px",fontWeight:700,cursor:"pointer" }}>Cancel</button>
-              <button onClick={() => confirmAction.type==="deleteItem"?deleteItem(confirmAction.itemId):removeUser(confirmAction.uid)} style={{ flex:1,background:"#ef4444",color:"white",border:"none",borderRadius:10,padding:"11px",fontWeight:700,cursor:"pointer" }}>Confirm</button>
+              <button onClick={() => {
+                if (confirmAction.type==="returnAll") returnAllForUser(confirmAction.userId);
+                else if (confirmAction.type==="deleteItem") deleteItem(confirmAction.itemId);
+                else removeUser(confirmAction.uid);
+                setConfirmAction(null);
+              }} style={{ flex:1,background:confirmAction.type==="returnAll"?"#f59e0b":"#ef4444",color:"white",border:"none",borderRadius:10,padding:"11px",fontWeight:700,cursor:"pointer" }}>
+                {confirmAction.type==="returnAll"?"↩ Return All":"Confirm"}
+              </button>
             </div>
           </div>
         </div>
@@ -1268,6 +1377,30 @@ export default function App() {
               <label style={lbl}>Reason *</label>
               <textarea style={{ ...inp,height:90,resize:"none" }} value={form.reason||""} onChange={e => setForm(f=>({...f,reason:e.target.value}))} placeholder="e.g. Still completing the project, will return by end of month" />
               <button onClick={submitExtension} disabled={!form.newDate||!form.reason} style={{ ...btn,opacity:(!form.newDate||!form.reason)?0.5:1 }}>Submit Extension Request</button>
+            </>}
+
+            {/* RETURN QTY ITEM */}
+            {modal==="returnQty"&&<>
+              <h3 style={{ margin:"0 0 4px",fontWeight:800,fontSize:18,color:"var(--text)" }}>Return Item</h3>
+              {form.itemId&&(()=>{
+                const item = getItem(Number(form.itemId));
+                const u = getUser(Number(form.userId));
+                return (
+                  <div style={{ background:BRAND.pale,borderRadius:10,padding:"10px 14px",marginBottom:12,fontSize:13 }}>
+                    <strong style={{ color:BRAND.primary }}>📦 {item?.name}</strong>
+                    <span style={{ color:"var(--text3)",marginLeft:8 }}>assigned to {u?.name} · ×{form.maxQty} {item?.unit}</span>
+                  </div>
+                );
+              })()}
+              <label style={lbl}>How many are being returned?</label>
+              <input style={inp} type="number" min={1} max={form.maxQty} value={form.returnQty||""} onChange={e => setForm(f=>({...f,returnQty:e.target.value}))} />
+              <div style={{ fontSize:11,color:"var(--text4)",marginTop:4 }}>Max: {form.maxQty}</div>
+              <button onClick={() => {
+                const qty = Number(form.returnQty);
+                if (!qty || qty < 1 || qty > Number(form.maxQty)) return showToast("Invalid quantity","error");
+                returnQtyItem(Number(form.assignmentId), Number(form.userId), Number(form.itemId), qty);
+                setModal(null); setForm({});
+              }} style={btn}>Confirm Return</button>
             </>}
 
             {/* REQUEST ITEM */}
