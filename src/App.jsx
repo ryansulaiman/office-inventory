@@ -423,6 +423,15 @@ export default function App() {
     setModal(null); setForm({}); showToast("Credentials updated!");
   };
 
+  const submitEditUserName = async () => {
+    const { targetUserId, targetName } = form;
+    if (!targetName || !targetName.trim()) return showToast("Name is required","error");
+    const initials = targetName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+    await supabase.from("users").update({ name:targetName.trim(), avatar:initials }).eq("id", Number(targetUserId));
+    await addLog("User Updated", currentUser.name, `Renamed user to ${targetName.trim()}`);
+    setModal(null); setForm({}); showToast("Name updated!");
+  };
+
   const submitMyAccount = async () => {
     const { myNewName, myNewEmail, myCurrentPassword, myNewPassword } = form;
     if (myCurrentPassword !== currentUser.password) return showToast("Current password is incorrect","error");
@@ -1058,6 +1067,7 @@ export default function App() {
                         <button onClick={() => setConfirmAction({ type:"returnAll", userId:u.id, name:u.name })}
                           style={{ background:"#fef3c7",color:"#92400e",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>↩ Return All</button>
                       )}
+                      <button onClick={() => { setModal("editUserName"); setForm({ targetUserId:String(u.id),targetName:u.name }); }} style={{ background:"#e0f2fe",color:"#0369a1",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>✏️ Name</button>
                       <button onClick={() => { setModal("changeRole"); setForm({ targetUserId:String(u.id),targetName:u.name,newRole:u.role }); }} style={{ background:BRAND.pale,color:BRAND.dark,border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>✏️ Role</button>
                       <button onClick={() => { setModal("changePassword"); setForm({ targetUserId:String(u.id),targetName:u.name,newEmail:u.email||"" }); }} style={{ background:"#fef3c7",color:"#92400e",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>🔑 Password</button>
                       {u.role!=="admin"&&<button onClick={() => setConfirmAction({ type:"removeUser",uid:u.id,name:u.name })} style={{ background:"#fee2e2",color:"#ef4444",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>Remove</button>}
@@ -1557,6 +1567,15 @@ export default function App() {
                 <option value="admin">Admin</option>
               </select>
               <button onClick={submitChangeRole} style={btn}>Save Role</button>
+            </>}
+
+            {/* EDIT USER NAME */}
+            {modal==="editUserName"&&<>
+              <h3 style={{ margin:"0 0 4px",fontWeight:800,fontSize:18,color:"var(--text)" }}>Edit Name</h3>
+              <p style={{ color:"var(--text4)",fontSize:13,margin:"0 0 12px" }}>Update display name for this user.</p>
+              <label style={lbl}>Full Name *</label>
+              <input style={inp} value={form.targetName||""} onChange={e => setForm(f=>({...f,targetName:e.target.value}))} placeholder="e.g. Jose Rizal" />
+              <button onClick={submitEditUserName} style={btn}>Save Name</button>
             </>}
 
             {/* CHANGE PASSWORD */}
