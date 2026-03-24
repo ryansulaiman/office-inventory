@@ -594,14 +594,16 @@ export default function App() {
             <div style={{ color:"white",fontWeight:800,fontSize:15 }}>Office Inventory</div>
             <div style={{ display:"flex",alignItems:"center",gap:6 }}>
               <div style={{ width:6,height:6,borderRadius:"50%",background:syncing?"#fbbf24":"#34d399" }} />
-              <button onClick={() => { setModal("myAccount"); setForm({ myNewName:currentUser?.name, myNewEmail:currentUser?.email }); }} style={{ background:"none",border:"none",color:"rgba(255,255,255,0.7)",fontSize:10,cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:4 }}>
-                {syncing?"Syncing...":"Live"} · {currentUser?.name} ✏️
-              </button>
+              <div style={{ color:"rgba(255,255,255,0.7)",fontSize:10 }}>{syncing?"Syncing...":"Live"}</div>
             </div>
           </div>
         </div>
         <div style={{ display:"flex",alignItems:"center",gap:8 }}>
           <button onClick={() => setDark(d=>!d)} title="Toggle dark mode" style={{ background:"rgba(255,255,255,0.18)",border:"none",color:"white",padding:"6px 10px",borderRadius:8,cursor:"pointer",fontSize:15,lineHeight:1 }}>{dark?"☀️":"🌙"}</button>
+          <button onClick={() => { setModal("myAccount"); setForm({ myNewName:currentUser?.name, myNewEmail:currentUser?.email }); }} style={{ background:"rgba(255,255,255,0.18)",border:"none",color:"white",padding:"5px 10px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:6 }}>
+            <Avatar user={currentUser} size={22} />
+            {currentUser?.name}
+          </button>
           <button onClick={handleLogout} style={{ background:"rgba(255,255,255,0.18)",border:"none",color:"white",padding:"6px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600 }}>Logout</button>
         </div>
       </div>
