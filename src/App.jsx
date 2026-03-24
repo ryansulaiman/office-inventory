@@ -423,6 +423,25 @@ export default function App() {
     setModal(null); setForm({}); showToast("Credentials updated!");
   };
 
+  const submitMyAccount = async () => {
+    const { myNewName, myNewEmail, myCurrentPassword, myNewPassword } = form;
+    if (myCurrentPassword !== currentUser.password) return showToast("Current password is incorrect","error");
+    if (myNewEmail && !myNewEmail.includes("@")) return showToast("Valid email is required","error");
+    if (myNewEmail && users.find(u => u.email === myNewEmail && u.id !== currentUser.id)) return showToast("Email already in use","error");
+    if (myNewPassword && myNewPassword.length < 4) return showToast("New password must be at least 4 characters","error");
+    const updates = {};
+    if (myNewName && myNewName !== currentUser.name) {
+      const initials = myNewName.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+      updates.name = myNewName;
+      updates.avatar = initials;
+    }
+    if (myNewEmail) updates.email = myNewEmail;
+    if (myNewPassword) updates.password = myNewPassword;
+    if (Object.keys(updates).length === 0) return showToast("No changes to save","error");
+    await supabase.from("users").update(updates).eq("id", currentUser.id);
+    setModal(null); setForm({}); showToast("Account updated!");
+  };
+
   const submitChangeRole = async () => {
     const { targetUserId, newRole } = form;
     if (!newRole) return showToast("Select a role","error");
@@ -566,7 +585,9 @@ export default function App() {
             <div style={{ color:"white",fontWeight:800,fontSize:15 }}>Office Inventory</div>
             <div style={{ display:"flex",alignItems:"center",gap:6 }}>
               <div style={{ width:6,height:6,borderRadius:"50%",background:syncing?"#fbbf24":"#34d399" }} />
-              <div style={{ color:"rgba(255,255,255,0.7)",fontSize:10 }}>{syncing?"Syncing...":"Live"} · {currentUser?.name}</div>
+              <button onClick={() => { setModal("myAccount"); setForm({ myNewName:currentUser?.name, myNewEmail:currentUser?.email }); }} style={{ background:"none",border:"none",color:"rgba(255,255,255,0.7)",fontSize:10,cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:4 }}>
+                {syncing?"Syncing...":"Live"} · {currentUser?.name} ✏️
+              </button>
             </div>
           </div>
         </div>
@@ -1547,6 +1568,21 @@ export default function App() {
               <label style={lbl}>New Password *</label>
               <input style={inp} type="password" value={form.newPassword||""} onChange={e => setForm(f=>({...f,newPassword:e.target.value}))} placeholder="••••••••" />
               <button onClick={submitChangePassword} style={btn}>Save Credentials</button>
+            </>}
+
+            {/* MY ACCOUNT */}
+            {modal==="myAccount"&&<>
+              <h3 style={{ margin:"0 0 4px",fontWeight:800,fontSize:18,color:"var(--text)" }}>My Account</h3>
+              <p style={{ color:"var(--text4)",fontSize:13,margin:"0 0 12px" }}>✉️ {currentUser?.email}</p>
+              <label style={lbl}>Display Name</label>
+              <input style={inp} value={form.myNewName||""} onChange={e => setForm(f=>({...f,myNewName:e.target.value}))} placeholder={currentUser?.name} />
+              <label style={lbl}>New Email (optional)</label>
+              <input style={inp} type="email" value={form.myNewEmail||""} onChange={e => setForm(f=>({...f,myNewEmail:e.target.value}))} placeholder={currentUser?.email} />
+              <label style={lbl}>Current Password *</label>
+              <input style={inp} type="password" value={form.myCurrentPassword||""} onChange={e => setForm(f=>({...f,myCurrentPassword:e.target.value}))} placeholder="Required to save changes" />
+              <label style={lbl}>New Password (optional)</label>
+              <input style={inp} type="password" value={form.myNewPassword||""} onChange={e => setForm(f=>({...f,myNewPassword:e.target.value}))} placeholder="Leave blank to keep current" />
+              <button onClick={submitMyAccount} style={btn}>Save Changes</button>
             </>}
 
           </div>
