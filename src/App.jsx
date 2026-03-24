@@ -448,25 +448,24 @@ export default function App() {
       }
     }
     setSaving(true);
-    try {
-      const groupId = crypto.randomUUID();
-      const note = form.note || "";
-      const rows = cart.map(c => ({
-        from_user_id: currentUser.id, item_id: Number(c.itemId), qty: Number(c.qty),
-        status: "pending", note, date: today, return_due_date: c.returnDate || null, group_id: groupId,
-      }));
-      await supabase.from("requests").insert(rows);
-      const summary = cart.map(c => `${c.qty}× ${getItem(Number(c.itemId))?.name}`).join(", ");
-      await addLog("Request", currentUser.name, `Requested ${summary}`);
-      // Email admins & assistants
-      const admins = users.filter(u => (u.role === "admin" || u.role === "inventory_assistant") && u.email);
-      if (admins.length) {
-        const items = cart.map(c => ({ name: getItem(Number(c.itemId))?.name, qty: c.qty }));
-        sendNotificationEmail(admins.map(u => u.email), `New Request from ${currentUser.name}`, buildNewRequestEmail(currentUser.name, items, note));
-      }
-      setCart([]);
-      closeModal("Request submitted!");
-    } catch { showToast("Failed to submit request","error"); }
+    const groupId = crypto.randomUUID();
+    const note = form.note || "";
+    const rows = cart.map(c => ({
+      from_user_id: currentUser.id, item_id: Number(c.itemId), qty: Number(c.qty),
+      status: "pending", note, date: today, return_due_date: c.returnDate || null, group_id: groupId,
+    }));
+    const { error } = await supabase.from("requests").insert(rows);
+    if (error) { showToast("Failed to submit: " + error.message, "error"); setSaving(false); return; }
+    const summary = cart.map(c => `${c.qty}× ${getItem(Number(c.itemId))?.name}`).join(", ");
+    await addLog("Request", currentUser.name, `Requested ${summary}`);
+    // Email admins & assistants
+    const admins = users.filter(u => (u.role === "admin" || u.role === "inventory_assistant") && u.email);
+    if (admins.length) {
+      const items = cart.map(c => ({ name: getItem(Number(c.itemId))?.name, qty: c.qty }));
+      sendNotificationEmail(admins.map(u => u.email), `New Request from ${currentUser.name}`, buildNewRequestEmail(currentUser.name, items, note));
+    }
+    setCart([]);
+    closeModal("Request submitted!");
     setSaving(false);
   };
 
