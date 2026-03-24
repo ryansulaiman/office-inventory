@@ -153,6 +153,13 @@ export default function App() {
   const getItem = id => inventory.find(i => i.id === id);
   const getUnit = id => units.find(u => u.id === id);
 
+  // ── HELPERS ──────────────────────────────────────────────────────────────
+  const initials = name => name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "?";
+  const validEmail = e => e && e.includes("@") && e.includes(".");
+  const emailTaken = (email, excludeId) => users.some(u => u.email === email && u.id !== excludeId);
+  const closeModal = (msg, type="success") => { setModal(null); setForm({}); if (msg) showToast(msg, type); };
+  const [saving, setSaving] = useState(false);
+
   // ── EMAIL/PASSWORD LOGIN ───────────────────────────────────────────────────
   useEffect(() => {
     if (loginLocked && lockTimer > 0) {
@@ -186,15 +193,20 @@ export default function App() {
   const generateUnits = async () => {
     const { itemId, prefix, count, startFrom } = form;
     if (!itemId || !prefix || !count || count < 1) return showToast("Fill in all fields","error");
+    if (Number(count) > 500) return showToast("Max 500 units at a time","error");
     const start = Number(startFrom) || 1;
     const newUnits = [];
     for (let i = start; i < start + Number(count); i++) {
       newUnits.push({ item_id:Number(itemId), unit_code:`${prefix}-${String(i).padStart(3,"0")}`, status:"available", condition:"good" });
     }
-    const { error } = await supabase.from("units").insert(newUnits);
-    if (error) return showToast("Some unit codes already exist!","error");
-    await addLog("Units Generated", currentUser.name, `Generated ${count} units for ${getItem(Number(itemId))?.name}`);
-    setModal(null); setForm({}); showToast(`${count} units created!`);
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("units").insert(newUnits);
+      if (error) { setSaving(false); return showToast("Some unit codes already exist!","error"); }
+      await addLog("Units Generated", currentUser.name, `Generated ${count} units for ${getItem(Number(itemId))?.name}`);
+      closeModal(`${count} units created!`);
+    } catch { showToast("Failed to generate units","error"); }
+    setSaving(false);
   };
 
   const assignUnits = async (req) => {
@@ -269,35 +281,44 @@ export default function App() {
     const { unitId, type, note, reportedBy } = form;
     if (!unitId || !type) return showToast("Fill in all fields","error");
     const unit = getUnit(Number(unitId));
+    if (!unit) return showToast("Unit not found","error");
     const activeUA = unitAssignments.find(ua => ua.unit_id === unit.id && ua.status === "active");
-    await supabase.from("units").update({ status:type, condition:type }).eq("id", unit.id);
-    if (activeUA) await supabase.from("unit_assignments").update({ status:"returned", returned_at:today }).eq("id", activeUA.id);
-    await supabase.from("incidents").insert({ item_id:unit.item_id, qty:1, type, reported_by:reportedBy||currentUser.name, held_by_user_id:activeUA?.user_id||null, note:note||"", date:today, status:"open", unit_id:unit.id });
-    await addLog(type==="damaged"?"Unit Damaged":"Unit Lost", currentUser.name, `${unit.unit_code} marked as ${type}`);
-    setModal(null); setForm({}); showToast(`${unit.unit_code} reported as ${type}!`);
+    setSaving(true);
+    try {
+      await supabase.from("units").update({ status:type, condition:type }).eq("id", unit.id);
+      if (activeUA) await supabase.from("unit_assignments").update({ status:"returned", returned_at:today }).eq("id", activeUA.id);
+      await supabase.from("incidents").insert({ item_id:unit.item_id, qty:1, type, reported_by:reportedBy||currentUser.name, held_by_user_id:activeUA?.user_id||null, note:note||"", date:today, status:"open", unit_id:unit.id });
+      await addLog(type==="damaged"?"Unit Damaged":"Unit Lost", currentUser.name, `${unit.unit_code} marked as ${type}`);
+      closeModal(`${unit.unit_code} reported as ${type}!`);
+    } catch { showToast("Failed to report incident","error"); }
+    setSaving(false);
   };
 
   // ── TRANSFERS (Staff peer-to-peer) ─────────────────────────────────────────
   const submitTransfer = async () => {
     const { selectedUnitIds, toUserId, note } = form;
     if (!selectedUnitIds || selectedUnitIds.length === 0 || !toUserId) return showToast("Fill in all fields","error");
-    for (const uid of selectedUnitIds) {
-      const unit = getUnit(Number(uid));
-      if (!unit) continue;
-      await supabase.from("transfers").insert({
-        from_user_id: currentUser.id,
-        to_user_id: Number(toUserId),
-        item_id: unit.item_id,
-        qty: 1,
-        status: "pending",
-        note: note||"",
-        date: today,
-        unit_id: unit.id,
-      });
-    }
-    const codes = selectedUnitIds.map(uid => getUnit(Number(uid))?.unit_code).join(", ");
-    await addLog("Transfer Sent", currentUser.name, `Sent ${codes} → ${getUser(Number(toUserId))?.name}`);
-    setModal(null); setForm({}); showToast(`${selectedUnitIds.length} device${selectedUnitIds.length>1?"s":""} transfer request sent!`);
+    setSaving(true);
+    try {
+      for (const uid of selectedUnitIds) {
+        const unit = getUnit(Number(uid));
+        if (!unit) continue;
+        await supabase.from("transfers").insert({
+          from_user_id: currentUser.id,
+          to_user_id: Number(toUserId),
+          item_id: unit.item_id,
+          qty: 1,
+          status: "pending",
+          note: note||"",
+          date: today,
+          unit_id: unit.id,
+        });
+      }
+      const codes = selectedUnitIds.map(uid => getUnit(Number(uid))?.unit_code).join(", ");
+      await addLog("Transfer Sent", currentUser.name, `Sent ${codes} → ${getUser(Number(toUserId))?.name}`);
+      closeModal(`${selectedUnitIds.length} device${selectedUnitIds.length>1?"s":""} transfer request sent!`);
+    } catch { showToast("Failed to submit transfer","error"); }
+    setSaving(false);
   };
 
   const acceptTransfer = async (t) => {
@@ -327,18 +348,23 @@ export default function App() {
     const { uaId, newDate, reason } = form;
     if (!uaId || !newDate || !reason) return showToast("Fill in all fields","error");
     const ua = unitAssignments.find(u => u.id === Number(uaId));
-    const unit = getUnit(ua?.unit_id);
-    await supabase.from("extension_requests").insert({
-      unit_assignment_id: Number(uaId),
-      unit_id: ua.unit_id,
-      user_id: currentUser.id,
-      requested_date: newDate,
-      reason,
-      status: "pending",
-      created_at: today,
-    });
-    await addLog("Extension Requested", currentUser.name, `${unit?.unit_code} — new return date: ${newDate}`);
-    setModal(null); setForm({}); showToast("Extension request submitted!");
+    if (!ua) return showToast("Assignment not found","error");
+    const unit = getUnit(ua.unit_id);
+    setSaving(true);
+    try {
+      await supabase.from("extension_requests").insert({
+        unit_assignment_id: Number(uaId),
+        unit_id: ua.unit_id,
+        user_id: currentUser.id,
+        requested_date: newDate,
+        reason,
+        status: "pending",
+        created_at: today,
+      });
+      await addLog("Extension Requested", currentUser.name, `${unit?.unit_code} — new return date: ${newDate}`);
+      closeModal("Extension request submitted!");
+    } catch { showToast("Failed to submit extension","error"); }
+    setSaving(false);
   };
 
   const approveExtension = async (ext) => {
@@ -363,9 +389,13 @@ export default function App() {
       const available = units.filter(u => u.item_id === Number(itemId) && u.status === "available").length;
       if (Number(qty) > available) return showToast(`Only ${available} units available!`, "error");
     }
-    await supabase.from("requests").insert({ from_user_id:currentUser.id, item_id:Number(itemId), qty:Number(qty), status:"pending", note:note||"", date:today, return_due_date:returnDate||null });
-    await addLog("Request", currentUser.name, `Requested ${qty}× ${item.name}${returnDate?` (return by ${returnDate})`:""}`);
-    setModal(null); setForm({}); showToast("Request submitted!");
+    setSaving(true);
+    try {
+      await supabase.from("requests").insert({ from_user_id:currentUser.id, item_id:Number(itemId), qty:Number(qty), status:"pending", note:note||"", date:today, return_due_date:returnDate||null });
+      await addLog("Request", currentUser.name, `Requested ${qty}× ${item.name}${returnDate?` (return by ${returnDate})`:""}`);
+      closeModal("Request submitted!");
+    } catch { showToast("Failed to submit request","error"); }
+    setSaving(false);
   };
 
   const rejectRequest = async req => {
@@ -377,9 +407,13 @@ export default function App() {
   const submitAddItem = async () => {
     const { name, category, total, unit, tracked } = form;
     if (!name || !tracked) return showToast("Fill in all fields","error");
-    await supabase.from("inventory").insert({ name, category:category||"General", total:Number(total)||0, available:Number(total)||0, unit:unit||"pcs", tracked:tracked==="yes" });
-    await addLog("Added Item", currentUser.name, `Added ${name}`);
-    setModal(null); setForm({}); showToast("Item added!");
+    setSaving(true);
+    try {
+      await supabase.from("inventory").insert({ name, category:category||"General", total:Number(total)||0, available:Number(total)||0, unit:unit||"pcs", tracked:tracked==="yes" });
+      await addLog("Added Item", currentUser.name, `Added ${name}`);
+      closeModal("Item added!");
+    } catch { showToast("Failed to add item","error"); }
+    setSaving(false);
   };
 
   const submitEditItem = async () => {
@@ -387,9 +421,13 @@ export default function App() {
     if (!name) return showToast("Fill in all fields","error");
     const item = getItem(id);
     const co = item.total - item.available;
-    await supabase.from("inventory").update({ name, category:category||"General", total:Number(total), available:Math.max(0,Number(total)-co), unit:unit||"pcs" }).eq("id", id);
-    await addLog("Edited Item", currentUser.name, `Updated "${name}"`);
-    setModal(null); setForm({}); showToast("Item updated!");
+    setSaving(true);
+    try {
+      await supabase.from("inventory").update({ name, category:category||"General", total:Number(total), available:Math.max(0,Number(total)-co), unit:unit||"pcs" }).eq("id", id);
+      await addLog("Edited Item", currentUser.name, `Updated "${name}"`);
+      closeModal("Item updated!");
+    } catch { showToast("Failed to update item","error"); }
+    setSaving(false);
   };
 
   const deleteItem = async itemId => {
@@ -402,62 +440,79 @@ export default function App() {
   const submitAddUser = async () => {
     const { name, role, email, password } = form;
     if (!name) return showToast("Name is required","error");
-    if (!email || !email.includes("@")) return showToast("Valid email is required","error");
+    if (!validEmail(email)) return showToast("Valid email is required","error");
     if (!password || password.length < 4) return showToast("Password must be at least 4 characters","error");
-    if (users.find(u => u.email === email)) return showToast("Email already in use","error");
-    const initials = name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+    if (emailTaken(email, -1)) return showToast("Email already in use","error");
     const colors = [BRAND.primary,"#ec4899","#f59e0b","#10b981","#3b82f6","#ef4444","#8b5cf6","#14b8a6","#f97316","#06b6d4"];
-    await supabase.from("users").insert({ name, role:role||"staff", avatar:initials, color:colors[users.length%colors.length], email, password, pin:"0000" });
-    await addLog("User Added", currentUser.name, `Added ${name} as ${role||"staff"}`);
-    setModal(null); setForm({}); showToast("User added!");
+    setSaving(true);
+    try {
+      await supabase.from("users").insert({ name, role:role||"staff", avatar:initials(name), color:colors[users.length%colors.length], email, password });
+      await addLog("User Added", currentUser.name, `Added ${name} as ${role||"staff"}`);
+      closeModal("User added!");
+    } catch { showToast("Failed to add user","error"); }
+    setSaving(false);
   };
 
   const submitChangePassword = async () => {
     const { targetUserId, newEmail, newPassword } = form;
-    if (newEmail && !newEmail.includes("@")) return showToast("Valid email is required","error");
-    if (newEmail && users.find(u => u.email === newEmail && u.id !== Number(targetUserId))) return showToast("Email already in use","error");
+    if (newEmail && !validEmail(newEmail)) return showToast("Valid email is required","error");
+    if (newEmail && emailTaken(newEmail, Number(targetUserId))) return showToast("Email already in use","error");
     if (!newPassword || newPassword.length < 4) return showToast("Password must be at least 4 characters","error");
     const updates = { password: newPassword };
     if (newEmail) updates.email = newEmail;
-    await supabase.from("users").update(updates).eq("id", Number(targetUserId));
-    setModal(null); setForm({}); showToast("Credentials updated!");
+    setSaving(true);
+    try {
+      await supabase.from("users").update(updates).eq("id", Number(targetUserId));
+      closeModal("Credentials updated!");
+    } catch { showToast("Failed to update credentials","error"); }
+    setSaving(false);
   };
 
   const submitEditUserName = async () => {
     const { targetUserId, targetName } = form;
-    if (!targetName || !targetName.trim()) return showToast("Name is required","error");
-    const initials = targetName.trim().split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-    await supabase.from("users").update({ name:targetName.trim(), avatar:initials }).eq("id", Number(targetUserId));
-    await addLog("User Updated", currentUser.name, `Renamed user to ${targetName.trim()}`);
-    setModal(null); setForm({}); showToast("Name updated!");
+    if (!targetName?.trim()) return showToast("Name is required","error");
+    setSaving(true);
+    try {
+      await supabase.from("users").update({ name:targetName.trim(), avatar:initials(targetName.trim()) }).eq("id", Number(targetUserId));
+      await addLog("User Updated", currentUser.name, `Renamed user to ${targetName.trim()}`);
+      closeModal("Name updated!");
+    } catch { showToast("Failed to update name","error"); }
+    setSaving(false);
   };
 
   const submitMyAccount = async () => {
     const { myNewName, myNewEmail, myCurrentPassword, myNewPassword } = form;
     if (myCurrentPassword !== currentUser.password) return showToast("Current password is incorrect","error");
-    if (myNewEmail && !myNewEmail.includes("@")) return showToast("Valid email is required","error");
-    if (myNewEmail && users.find(u => u.email === myNewEmail && u.id !== currentUser.id)) return showToast("Email already in use","error");
+    if (myNewEmail && !validEmail(myNewEmail)) return showToast("Valid email is required","error");
+    if (myNewEmail && emailTaken(myNewEmail, currentUser.id)) return showToast("Email already in use","error");
     if (myNewPassword && myNewPassword.length < 4) return showToast("New password must be at least 4 characters","error");
     const updates = {};
     if (myNewName && myNewName !== currentUser.name) {
-      const initials = myNewName.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
       updates.name = myNewName;
-      updates.avatar = initials;
+      updates.avatar = initials(myNewName);
     }
     if (myNewEmail) updates.email = myNewEmail;
     if (myNewPassword) updates.password = myNewPassword;
     if (Object.keys(updates).length === 0) return showToast("No changes to save","error");
-    await supabase.from("users").update(updates).eq("id", currentUser.id);
-    setModal(null); setForm({}); showToast("Account updated!");
+    setSaving(true);
+    try {
+      await supabase.from("users").update(updates).eq("id", currentUser.id);
+      closeModal("Account updated!");
+    } catch { showToast("Failed to update account","error"); }
+    setSaving(false);
   };
 
   const submitChangeRole = async () => {
     const { targetUserId, newRole } = form;
     if (!newRole) return showToast("Select a role","error");
     const u = getUser(Number(targetUserId));
-    await supabase.from("users").update({ role:newRole }).eq("id", Number(targetUserId));
-    await addLog("Role Changed", currentUser.name, `Changed ${u?.name}'s role to ${newRole}`);
-    setModal(null); setForm({}); showToast("Role updated!");
+    setSaving(true);
+    try {
+      await supabase.from("users").update({ role:newRole }).eq("id", Number(targetUserId));
+      await addLog("Role Changed", currentUser.name, `Changed ${u?.name}'s role to ${newRole}`);
+      closeModal("Role updated!");
+    } catch { showToast("Failed to update role","error"); }
+    setSaving(false);
   };
 
   const removeUser = async uid => {
@@ -1087,7 +1142,7 @@ export default function App() {
             <h2 style={{ fontWeight:800,color:"var(--text)",marginBottom:16,fontSize:20 }}>Audit Log</h2>
             {logs.length===0&&<div style={{ color:"var(--text4)",textAlign:"center",marginTop:60 }}>No activity yet.</div>}
             {logs.map(l => {
-              const iconMap = { "Approved":"✅","Rejected":"❌","Transfer Sent":"📤","Transfer Accepted":"✅","Transfer Declined":"❌","Return":"↩️","Added Item":"➕","Edited Item":"✏️","Deleted Item":"🗑️","User Added":"👤","User Removed":"🗑️","Request":"📋","Damaged":"🔧","Lost":"❓","Incident Resolved":"✅","PIN Changed":"🔑","Units Assigned":"📱","Unit Returned":"↩️","Unit Damaged":"🔧","Unit Lost":"❓","Units Generated":"📦","Role Changed":"🔄","Extension Requested":"📅","Extension Approved":"✅","Extension Denied":"❌" };
+              const iconMap = { "Approved":"✅","Rejected":"❌","Transfer Sent":"📤","Transfer Accepted":"✅","Transfer Declined":"❌","Return":"↩️","Added Item":"➕","Edited Item":"✏️","Deleted Item":"🗑️","User Added":"👤","User Removed":"🗑️","Request":"📋","Damaged":"🔧","Lost":"❓","Incident Resolved":"✅","User Updated":"✏️","Units Assigned":"📱","Unit Returned":"↩️","Unit Damaged":"🔧","Unit Lost":"❓","Units Generated":"📦","Role Changed":"🔄","Extension Requested":"📅","Extension Approved":"✅","Extension Denied":"❌" };
               return (
                 <Card key={l.id} style={{ padding:"12px 14px" }}>
                   <div style={{ display:"flex",gap:10,alignItems:"flex-start" }}>
@@ -1381,7 +1436,7 @@ export default function App() {
               </select>
               <label style={lbl}>Note (optional)</label>
               <input style={inp} value={form.note||""} onChange={e => setForm(f=>({...f,note:e.target.value}))} placeholder="e.g. Temporary loan while mine is being fixed" />
-              <button onClick={submitTransfer} disabled={!(form.selectedUnitIds||[]).length||!form.toUserId} style={{ ...btn,opacity:(!(form.selectedUnitIds||[]).length||!form.toUserId)?0.5:1 }}>Send Transfer Request</button>
+              <button onClick={submitTransfer} disabled={saving||!(form.selectedUnitIds||[]).length||!form.toUserId} style={{ ...btn,opacity:(saving||!(form.selectedUnitIds||[]).length||!form.toUserId)?0.5:1 }}>{saving?"Sending...":"Send Transfer Request"}</button>
             </>}
 
             {/* EXTENSION REQUEST */}
@@ -1402,7 +1457,7 @@ export default function App() {
               <input style={inp} type="date" min={today} value={form.newDate||""} onChange={e => setForm(f=>({...f,newDate:e.target.value}))} />
               <label style={lbl}>Reason *</label>
               <textarea style={{ ...inp,height:90,resize:"none" }} value={form.reason||""} onChange={e => setForm(f=>({...f,reason:e.target.value}))} placeholder="e.g. Still completing the project, will return by end of month" />
-              <button onClick={submitExtension} disabled={!form.newDate||!form.reason} style={{ ...btn,opacity:(!form.newDate||!form.reason)?0.5:1 }}>Submit Extension Request</button>
+              <button onClick={submitExtension} disabled={saving||!form.newDate||!form.reason} style={{ ...btn,opacity:(saving||!form.newDate||!form.reason)?0.5:1 }}>{saving?"Submitting...":"Submit Extension Request"}</button>
             </>}
 
             {/* RETURN QTY ITEM */}
@@ -1448,7 +1503,7 @@ export default function App() {
               <div style={{ fontSize:11,color:"var(--text4)",marginTop:4 }}>Leave blank if you need it indefinitely. The assistant may set or change this.</div>
               <label style={lbl}>Reason (optional)</label>
               <input style={inp} value={form.note||""} onChange={e => setForm(f=>({...f,note:e.target.value}))} placeholder="e.g. For warehouse team" />
-              <button onClick={submitRequest} disabled={!form.itemId||!form.qty} style={{ ...btn,opacity:(!form.itemId||!form.qty)?0.5:1 }}>Submit Request</button>
+              <button onClick={submitRequest} disabled={saving||!form.itemId||!form.qty} style={{ ...btn,opacity:(saving||!form.itemId||!form.qty)?0.5:1 }}>{saving?"Submitting...":"Submit Request"}</button>
             </>}
 
             {/* GENERATE UNITS */}
@@ -1475,7 +1530,7 @@ export default function App() {
                   Preview: <strong>{form.prefix}-{String(Number(form.startFrom)||1).padStart(3,"0")}</strong> to <strong>{form.prefix}-{String((Number(form.startFrom)||1)+(Number(form.count)||1)-1).padStart(3,"0")}</strong>
                 </div>
               )}
-              <button onClick={generateUnits} style={btn}>Generate Units</button>
+              <button onClick={generateUnits} disabled={saving} style={{ ...btn,opacity:saving?0.5:1 }}>{saving?"Generating...":"Generate Units"}</button>
             </>}
 
             {/* REPORT INCIDENT */}
@@ -1498,7 +1553,7 @@ export default function App() {
               <input style={inp} value={form.reportedBy||currentUser?.name||""} onChange={e => setForm(f=>({...f,reportedBy:e.target.value}))} />
               <label style={lbl}>Notes</label>
               <textarea style={{ ...inp,height:80,resize:"none" }} value={form.note||""} onChange={e => setForm(f=>({...f,note:e.target.value}))} placeholder="Describe what happened..." />
-              <button onClick={reportUnitIncident} style={{ ...btn,background:"linear-gradient(135deg,#c2410c,#f97316)" }}>Submit Report</button>
+              <button onClick={reportUnitIncident} disabled={saving} style={{ ...btn,background:"linear-gradient(135deg,#c2410c,#f97316)",opacity:saving?0.5:1 }}>{saving?"Submitting...":"Submit Report"}</button>
             </>}
 
             {/* ADD ITEM */}
@@ -1523,7 +1578,7 @@ export default function App() {
                 <label style={lbl}>Unit</label>
                 <input style={inp} value={form.unit||""} onChange={e => setForm(f=>({...f,unit:e.target.value}))} placeholder="pcs / sets / rolls" />
               </>}
-              <button onClick={submitAddItem} disabled={!form.tracked} style={{ ...btn,opacity:!form.tracked?0.5:1 }}>Add to Inventory</button>
+              <button onClick={submitAddItem} disabled={saving||!form.tracked} style={{ ...btn,opacity:(saving||!form.tracked)?0.5:1 }}>{saving?"Adding...":"Add to Inventory"}</button>
             </>}
 
             {/* EDIT ITEM */}
@@ -1537,7 +1592,7 @@ export default function App() {
               <input style={inp} type="number" min={1} value={form.total||""} onChange={e => setForm(f=>({...f,total:e.target.value}))} />
               <label style={lbl}>Unit</label>
               <input style={inp} value={form.unit||""} onChange={e => setForm(f=>({...f,unit:e.target.value}))} />
-              <button onClick={submitEditItem} style={btn}>Save Changes</button>
+              <button onClick={submitEditItem} disabled={saving} style={{ ...btn,opacity:saving?0.5:1 }}>{saving?"Saving...":"Save Changes"}</button>
             </>}
 
             {/* ADD USER */}
@@ -1555,7 +1610,7 @@ export default function App() {
                 <option value="inventory_assistant">Inventory Assistant</option>
                 <option value="admin">Admin</option>
               </select>
-              <button onClick={submitAddUser} style={btn}>Add Member</button>
+              <button onClick={submitAddUser} disabled={saving} style={{ ...btn,opacity:saving?0.5:1 }}>{saving?"Saving...":"Add Member"}</button>
             </>}
 
             {/* CHANGE ROLE */}
@@ -1568,7 +1623,7 @@ export default function App() {
                 <option value="inventory_assistant">Inventory Assistant</option>
                 <option value="admin">Admin</option>
               </select>
-              <button onClick={submitChangeRole} style={btn}>Save Role</button>
+              <button onClick={submitChangeRole} disabled={saving} style={{ ...btn,opacity:saving?0.5:1 }}>{saving?"Saving...":"Save Role"}</button>
             </>}
 
             {/* EDIT USER NAME */}
@@ -1577,7 +1632,7 @@ export default function App() {
               <p style={{ color:"var(--text4)",fontSize:13,margin:"0 0 12px" }}>Update display name for this user.</p>
               <label style={lbl}>Full Name *</label>
               <input style={inp} value={form.targetName||""} onChange={e => setForm(f=>({...f,targetName:e.target.value}))} placeholder="e.g. Jose Rizal" />
-              <button onClick={submitEditUserName} style={btn}>Save Name</button>
+              <button onClick={submitEditUserName} disabled={saving} style={{ ...btn,opacity:saving?0.5:1 }}>{saving?"Saving...":"Save Name"}</button>
             </>}
 
             {/* CHANGE PASSWORD */}
@@ -1588,7 +1643,7 @@ export default function App() {
               <input style={inp} type="email" value={form.newEmail||""} onChange={e => setForm(f=>({...f,newEmail:e.target.value}))} placeholder="name@company.com" />
               <label style={lbl}>New Password *</label>
               <input style={inp} type="password" value={form.newPassword||""} onChange={e => setForm(f=>({...f,newPassword:e.target.value}))} placeholder="••••••••" />
-              <button onClick={submitChangePassword} style={btn}>Save Credentials</button>
+              <button onClick={submitChangePassword} disabled={saving} style={{ ...btn,opacity:saving?0.5:1 }}>{saving?"Saving...":"Save Credentials"}</button>
             </>}
 
             {/* MY ACCOUNT */}
@@ -1603,7 +1658,7 @@ export default function App() {
               <input style={inp} type="password" value={form.myCurrentPassword||""} onChange={e => setForm(f=>({...f,myCurrentPassword:e.target.value}))} placeholder="Required to save changes" />
               <label style={lbl}>New Password (optional)</label>
               <input style={inp} type="password" value={form.myNewPassword||""} onChange={e => setForm(f=>({...f,myNewPassword:e.target.value}))} placeholder="Leave blank to keep current" />
-              <button onClick={submitMyAccount} style={btn}>Save Changes</button>
+              <button onClick={submitMyAccount} disabled={saving} style={{ ...btn,opacity:saving?0.5:1 }}>{saving?"Saving...":"Save Changes"}</button>
             </>}
 
           </div>
