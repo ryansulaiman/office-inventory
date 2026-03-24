@@ -88,7 +88,7 @@ const DarkModeStyles = () => (
       --inp-bg:#1e1e35; --nav-bg:#1a1a2e; --nav-border:#2a2a45;
       --card-shadow:0 1px 8px rgba(0,0,0,0.4); --modal-bg:#1a1a2e;
     }
-    body { background:var(--bg); color:var(--text); transition:background .25s,color .25s; }
+    body { background:var(--bg); color:var(--text); transition:background .25s,color .25s; margin:0; }
     *{ transition:background-color .25s,border-color .25s,color .15s; }
     @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
