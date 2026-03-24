@@ -58,11 +58,12 @@ export default function App() {
 
   const [loaded, setLoaded] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
-  const [loginStep, setLoginStep] = useState("select");
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [pinInput, setPinInput] = useState("");
-  const [pinError, setPinError] = useState(false);
-  const [pinShake, setPinShake] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPass, setLoginPass] = useState("");
+  const [loginErr, setLoginErr] = useState("");
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [loginLocked, setLoginLocked] = useState(false);
+  const [lockTimer, setLockTimer] = useState(0);
   const [users, setUsers] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -152,25 +153,34 @@ export default function App() {
   const getItem = id => inventory.find(i => i.id === id);
   const getUnit = id => units.find(u => u.id === id);
 
-  // ── PIN LOGIN ──────────────────────────────────────────────────────────────
-  const handleSelectUser = u => { setSelectedUser(u); setPinInput(""); setPinError(false); setLoginStep("pin"); };
-  const handlePinDigit = d => {
-    if (pinInput.length >= 4) return;
-    const next = pinInput + d;
-    setPinInput(next);
-    if (next.length === 4) {
-      setTimeout(() => {
-        if (next === selectedUser.pin) {
-          setCurrentUserId(selectedUser.id); setTab("dashboard"); setLoginStep("select"); setPinInput("");
-        } else {
-          setPinError(true); setPinShake(true);
-          setTimeout(() => { setPinInput(""); setPinError(false); setPinShake(false); }, 800);
-        }
-      }, 120);
+  // ── EMAIL/PASSWORD LOGIN ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (loginLocked && lockTimer > 0) {
+      const t = setTimeout(() => setLockTimer(l => l - 1), 1000);
+      return () => clearTimeout(t);
+    }
+    if (loginLocked && lockTimer === 0) setLoginLocked(false);
+  }, [loginLocked, lockTimer]);
+
+  const handleLogin = () => {
+    if (loginLocked) return;
+    const u = users.find(u => u.email === loginEmail && u.password === loginPass);
+    if (u) {
+      setLoginErr(""); setLoginAttempts(0);
+      setCurrentUserId(u.id); setTab("dashboard");
+      setLoginEmail(""); setLoginPass("");
+    } else {
+      const a = loginAttempts + 1;
+      setLoginAttempts(a);
+      if (a >= 3) {
+        setLoginLocked(true); setLockTimer(30);
+        setLoginErr("Too many attempts. Locked for 30s.");
+      } else {
+        setLoginErr(`Invalid credentials. ${3 - a} attempt(s) left.`);
+      }
     }
   };
-  const handlePinDelete = () => { if (pinInput.length > 0) setPinInput(p => p.slice(0,-1)); };
-  const handleLogout = () => { setCurrentUserId(null); setLoginStep("select"); setSelectedUser(null); setPinInput(""); };
+  const handleLogout = () => { setCurrentUserId(null); setLoginEmail(""); setLoginPass(""); setLoginErr(""); setLoginAttempts(0); setLoginLocked(false); };
 
   // ── UNIT ACTIONS ───────────────────────────────────────────────────────────
   const generateUnits = async () => {
@@ -468,69 +478,45 @@ export default function App() {
     </>
   );
 
-  // ── LOGIN: SELECT ──────────────────────────────────────────────────────────
-  if (!currentUserId && loginStep==="select") return (
+  // ── LOGIN ──────────────────────────────────────────────────────────────────
+  if (!currentUserId) return (
     <><DarkModeStyles />
       <div style={{ minHeight:"100vh",background:BRAND.gradient,display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
-        <div style={{ background:"var(--surface)",borderRadius:20,padding:28,width:"100%",maxWidth:420,boxShadow:"0 25px 60px rgba(0,0,0,0.35)" }}>
-          <div style={{ display:"flex",justifyContent:"flex-end",marginBottom:8 }}>
+        <div style={{ background:"var(--surface)",borderRadius:20,padding:40,width:"100%",maxWidth:400,boxShadow:"0 24px 64px rgba(0,0,0,0.4)" }}>
+          <div style={{ display:"flex",justifyContent:"flex-end",marginBottom:4 }}>
             <button onClick={() => setDark(d=>!d)} title="Toggle dark mode" style={{ background:"rgba(98,64,204,0.12)",border:"none",borderRadius:20,padding:"5px 12px",cursor:"pointer",fontSize:16,color:BRAND.primary,fontWeight:700 }}>{dark?"☀️":"🌙"}</button>
           </div>
           <div style={{ textAlign:"center",marginBottom:28 }}>
-            <div style={{ display:"flex",justifyContent:"center",marginBottom:16 }}><Logo size={200} /></div>
+            <div style={{ display:"flex",justifyContent:"center",marginBottom:12 }}><Logo size={160} /></div>
             <h1 style={{ fontSize:22,fontWeight:800,color:"var(--text)",margin:0 }}>Office Inventory</h1>
-            <p style={{ color:"var(--text3)",fontSize:13,marginTop:4 }}>Select your account</p>
+            <p style={{ color:"var(--text3)",fontSize:12,marginTop:4 }}>Asset & Equipment Management</p>
           </div>
-          <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
-            {users.map(u => (
-              <button key={u.id} onClick={() => handleSelectUser(u)}
-                style={{ display:"flex",alignItems:"center",gap:12,padding:"11px 14px",border:"2px solid var(--border)",borderRadius:12,background:"var(--surface)",cursor:"pointer",textAlign:"left" }}
-                onMouseEnter={e => e.currentTarget.style.borderColor=BRAND.primary}
-                onMouseLeave={e => e.currentTarget.style.borderColor="var(--border)"}>
-                <Avatar user={u} size={40} />
-                <div style={{ flex:1 }}>
-                  <div style={{ fontWeight:700,color:"var(--text)",fontSize:14 }}>{u.name}</div>
-                  <RoleBadge role={u.role} />
-                </div>
-                <span style={{ color:"var(--text4)",fontSize:18 }}>›</span>
-              </button>
-            ))}
-          </div>
+          <label style={lbl}>Work Email</label>
+          <input value={loginEmail} onChange={e => setLoginEmail(e.target.value)}
+            onKeyDown={e => e.key==="Enter" && handleLogin()}
+            placeholder="you@company.com"
+            style={inp} />
+          <label style={lbl}>Password</label>
+          <input type="password" value={loginPass} onChange={e => setLoginPass(e.target.value)}
+            onKeyDown={e => e.key==="Enter" && handleLogin()}
+            placeholder="••••••••"
+            style={{ ...inp, marginBottom:6 }} />
+          {loginLocked && (
+            <div style={{ background:"#fee2e2",borderRadius:8,padding:"8px 12px",fontSize:13,color:"#991b1b",marginBottom:10,marginTop:8 }}>
+              🔒 Too many attempts. Wait {lockTimer}s to try again.
+            </div>
+          )}
+          {loginErr && !loginLocked && (
+            <div style={{ color:"#ef4444",fontSize:13,marginBottom:8,marginTop:6 }}>{loginErr}</div>
+          )}
+          <button onClick={handleLogin} disabled={loginLocked}
+            style={{ ...btn, background:loginLocked?"#94a3b8":BRAND.gradLight, cursor:loginLocked?"not-allowed":"pointer", opacity:loginLocked?0.7:1 }}>
+            Sign In
+          </button>
         </div>
       </div>
     </>
   );
-
-  // ── LOGIN: PIN ─────────────────────────────────────────────────────────────
-  if (!currentUserId && loginStep==="pin") {
-    const dialKeys = ["1","2","3","4","5","6","7","8","9","","0","⌫"];
-    return (
-      <><DarkModeStyles />
-        <div style={{ minHeight:"100vh",background:BRAND.gradient,display:"flex",alignItems:"center",justifyContent:"center",padding:16 }}>
-          <div style={{ background:"var(--surface)",borderRadius:24,padding:"32px 28px",width:"100%",maxWidth:340,boxShadow:"0 25px 60px rgba(0,0,0,0.35)",textAlign:"center",position:"relative" }}>
-            <button onClick={() => { setLoginStep("select"); setPinInput(""); setPinError(false); }} style={{ position:"absolute",top:16,left:16,background:"none",border:"none",color:"var(--text3)",fontSize:22,cursor:"pointer" }}>‹</button>
-            <Avatar user={selectedUser} size={64} />
-            <div style={{ fontWeight:800,fontSize:18,color:"var(--text)",marginTop:12 }}>{selectedUser?.name}</div>
-            <div style={{ fontSize:13,color:"var(--text4)",marginBottom:24 }}><RoleBadge role={selectedUser?.role} /> · Enter PIN</div>
-            <div style={{ display:"flex",justifyContent:"center",gap:16,marginBottom:pinError?12:32,animation:pinShake?"shake 0.4s":"none" }}>
-              {[0,1,2,3].map(i => (
-                <div key={i} style={{ width:16,height:16,borderRadius:"50%",border:`2.5px solid ${pinError?"#ef4444":BRAND.primary}`,background:pinInput.length>i?(pinError?"#ef4444":BRAND.primary):"transparent",transition:"background 0.15s" }} />
-              ))}
-            </div>
-            {pinError && <div style={{ color:"#ef4444",fontSize:13,fontWeight:600,marginBottom:16 }}>Wrong PIN. Try again.</div>}
-            <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12 }}>
-              {dialKeys.map((k,i) => (
-                <button key={i} onClick={() => k==="⌫"?handlePinDelete():k!==""?handlePinDigit(k):null} disabled={k===""}
-                  style={{ height:60,borderRadius:16,border:"none",background:k===""?"transparent":k==="⌫"?"#fee2e2":BRAND.pale,color:k==="⌫"?"#ef4444":BRAND.darker,fontSize:k==="⌫"?20:22,fontWeight:700,cursor:k===""?"default":"pointer" }}>
-                  {k}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
 
   // ── TABS ───────────────────────────────────────────────────────────────────
   const overdueCount = unitAssignments.filter(ua => ua.status==="active" && isOverdue(ua)).length;
