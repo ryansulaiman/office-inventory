@@ -522,11 +522,10 @@ export default function App() {
     if (emailTaken(email, -1)) return showToast("Email already in use","error");
     const colors = [BRAND.primary,"#ec4899","#f59e0b","#10b981","#3b82f6","#ef4444","#8b5cf6","#14b8a6","#f97316","#06b6d4"];
     setSaving(true);
-    try {
-      await supabase.from("users").insert({ name, role:role||"staff", avatar:initials(name), color:colors[users.length%colors.length], email, password });
-      await addLog("User Added", currentUser.name, `Added ${name} as ${role||"staff"}`);
-      closeModal("User added!");
-    } catch { showToast("Failed to add user","error"); }
+    const { error } = await supabase.from("users").insert({ name, role:role||"staff", avatar:initials(name), color:colors[users.length%colors.length], email, password, pin:"0000" });
+    if (error) { showToast("Failed to add user: " + error.message, "error"); setSaving(false); return; }
+    await addLog("User Added", currentUser.name, `Added ${name} as ${role||"staff"}`);
+    closeModal("User added!");
     setSaving(false);
   };
 
