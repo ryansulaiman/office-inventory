@@ -11,6 +11,56 @@ const BRAND = {
   gradLight: "linear-gradient(135deg,#6240CC,#8A6EDB)",
 };
 
+// ── Email helpers ──
+const sendNotificationEmail = async (to, subject, html) => {
+  try {
+    await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to, subject, html }),
+    });
+  } catch (e) { console.warn("Email notification failed:", e); }
+};
+
+const emailWrap = (body) => `
+<div style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto">
+  <div style="background:linear-gradient(135deg,#2B1575,#6240CC);padding:20px 24px;border-radius:12px 12px 0 0">
+    <div style="color:white;font-size:18px;font-weight:800">Office Inventory</div>
+  </div>
+  <div style="background:#ffffff;padding:24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
+    ${body}
+  </div>
+  <div style="text-align:center;padding:12px;font-size:11px;color:#9ca3af">Sent by Office Inventory System</div>
+</div>`;
+
+const buildNewRequestEmail = (requesterName, items, note) => emailWrap(`
+  <div style="font-size:15px;font-weight:700;color:#1e1b4b;margin-bottom:12px">New Request from ${requesterName}</div>
+  <table style="width:100%;border-collapse:collapse;margin-bottom:12px">
+    <tr style="background:#f3f4f6"><th style="text-align:left;padding:8px;font-size:13px;color:#374151">Item</th><th style="text-align:center;padding:8px;font-size:13px;color:#374151">Qty</th></tr>
+    ${items.map(i => `<tr><td style="padding:8px;font-size:14px;border-bottom:1px solid #e5e7eb">${i.name}</td><td style="text-align:center;padding:8px;font-size:14px;border-bottom:1px solid #e5e7eb">${i.qty}</td></tr>`).join("")}
+  </table>
+  ${note ? `<div style="font-size:13px;color:#6b7280;font-style:italic;margin-bottom:8px">"${note}"</div>` : ""}
+  <div style="font-size:13px;color:#6b7280">Please review and approve in the Office Inventory system.</div>
+`);
+
+const buildApprovalEmail = (userName, itemName, qty, unitCodes) => emailWrap(`
+  <div style="font-size:15px;font-weight:700;color:#10b981;margin-bottom:12px">Request Approved</div>
+  <div style="font-size:14px;color:#374151;margin-bottom:8px">Hi ${userName}, your request has been approved:</div>
+  <div style="background:#f0fdf4;padding:12px;border-radius:8px;margin-bottom:8px">
+    <strong>${qty}x ${itemName}</strong>
+    ${unitCodes ? `<div style="margin-top:6px;font-size:13px;color:#6240CC;font-family:monospace">Units: ${unitCodes}</div>` : ""}
+  </div>
+`);
+
+const buildRejectionEmail = (userName, itemName, qty) => emailWrap(`
+  <div style="font-size:15px;font-weight:700;color:#ef4444;margin-bottom:12px">Request Rejected</div>
+  <div style="font-size:14px;color:#374151;margin-bottom:8px">Hi ${userName}, your request has been rejected:</div>
+  <div style="background:#fef2f2;padding:12px;border-radius:8px">
+    <strong>${qty}x ${itemName}</strong>
+  </div>
+  <div style="font-size:13px;color:#6b7280;margin-top:8px">Please contact your inventory assistant for more details.</div>
+`);
+
 function useDarkMode() {
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("darkMode");
@@ -83,6 +133,7 @@ export default function App() {
   const [incidentFilter, setIncidentFilter] = useState("all");
   const [syncing, setSyncing] = useState(false);
   const [selectedUnits, setSelectedUnits] = useState({});
+  const [cart, setCart] = useState([]);
 
   const today = new Date().toISOString().slice(0, 10);
   const currentUser = users.find(u => u.id === currentUserId);
@@ -225,6 +276,11 @@ export default function App() {
     await supabase.from("requests").update({ status:"approved" }).eq("id", req.id);
     await addLog("Units Assigned", currentUser.name, `Assigned ${unitCodes} to ${getUser(req.from_user_id)?.name}${returnDue?` (due ${returnDue})`:""}`);
     setSelectedUnits(s => { const n={...s}; delete n[req.id]; return n; });
+    const requester = getUser(req.from_user_id);
+    const item = getItem(req.item_id);
+    if (requester?.email) {
+      sendNotificationEmail([requester.email], `Request Approved: ${item?.name}`, buildApprovalEmail(requester.name, item?.name, req.qty, unitCodes));
+    }
     showToast(`${chosen.length} unit${chosen.length>1?"s":""} assigned!`);
   };
 
@@ -381,18 +437,34 @@ export default function App() {
 
   // ── STANDARD ACTIONS ───────────────────────────────────────────────────────
   const submitRequest = async () => {
-    const { itemId, qty, note, returnDate } = form;
-    if (!itemId || !qty || qty < 1) return showToast("Fill in all fields","error");
-    const item = getItem(Number(itemId));
-    const isTracked = units.some(u => u.item_id === Number(itemId));
-    if (isTracked) {
-      const available = units.filter(u => u.item_id === Number(itemId) && u.status === "available").length;
-      if (Number(qty) > available) return showToast(`Only ${available} units available!`, "error");
+    if (cart.length === 0) return showToast("Add at least one item to your request","error");
+    for (const c of cart) {
+      const item = getItem(Number(c.itemId));
+      if (!item) return showToast("Invalid item in cart","error");
+      const isTracked = units.some(u => u.item_id === Number(c.itemId));
+      if (isTracked) {
+        const available = units.filter(u => u.item_id === Number(c.itemId) && u.status === "available").length;
+        if (Number(c.qty) > available) return showToast(`Only ${available} ${item.name} available!`, "error");
+      }
     }
     setSaving(true);
     try {
-      await supabase.from("requests").insert({ from_user_id:currentUser.id, item_id:Number(itemId), qty:Number(qty), status:"pending", note:note||"", date:today, return_due_date:returnDate||null });
-      await addLog("Request", currentUser.name, `Requested ${qty}× ${item.name}${returnDate?` (return by ${returnDate})`:""}`);
+      const groupId = crypto.randomUUID();
+      const note = form.note || "";
+      const rows = cart.map(c => ({
+        from_user_id: currentUser.id, item_id: Number(c.itemId), qty: Number(c.qty),
+        status: "pending", note, date: today, return_due_date: c.returnDate || null, group_id: groupId,
+      }));
+      await supabase.from("requests").insert(rows);
+      const summary = cart.map(c => `${c.qty}× ${getItem(Number(c.itemId))?.name}`).join(", ");
+      await addLog("Request", currentUser.name, `Requested ${summary}`);
+      // Email admins & assistants
+      const admins = users.filter(u => (u.role === "admin" || u.role === "inventory_assistant") && u.email);
+      if (admins.length) {
+        const items = cart.map(c => ({ name: getItem(Number(c.itemId))?.name, qty: c.qty }));
+        sendNotificationEmail(admins.map(u => u.email), `New Request from ${currentUser.name}`, buildNewRequestEmail(currentUser.name, items, note));
+      }
+      setCart([]);
       closeModal("Request submitted!");
     } catch { showToast("Failed to submit request","error"); }
     setSaving(false);
@@ -400,7 +472,12 @@ export default function App() {
 
   const rejectRequest = async req => {
     await supabase.from("requests").update({ status:"rejected" }).eq("id", req.id);
-    await addLog("Rejected", currentUser.name, `Rejected ${getItem(req.item_id)?.name} from ${getUser(req.from_user_id)?.name}`);
+    const item = getItem(req.item_id);
+    const requester = getUser(req.from_user_id);
+    await addLog("Rejected", currentUser.name, `Rejected ${item?.name} from ${requester?.name}`);
+    if (requester?.email) {
+      sendNotificationEmail([requester.email], `Request Rejected: ${item?.name}`, buildRejectionEmail(requester.name, item?.name, req.qty));
+    }
     showToast("Request rejected.");
   };
 
@@ -955,85 +1032,125 @@ export default function App() {
             )}
 
             {requests.length===0 && pendingExtensions.length===0 && <div style={{ color:"var(--text4)",textAlign:"center",marginTop:60 }}>No requests yet.</div>}
-            {["pending","approved","rejected"].map(status => {
-              const group = requests.filter(r=>r.status===status);
-              if (!group.length) return null;
-              return (
-                <div key={status}>
-                  <SectionLabel label={status} />
-                  {group.map(req => {
-                    const item = getItem(req.item_id);
-                    const isTracked = units.some(u=>u.item_id===req.item_id);
-                    const availableUnits = units.filter(u=>u.item_id===req.item_id&&u.status==="available");
-                    const chosen = selectedUnits[req.id] || [];
-                    return (
-                      <Card key={req.id}>
-                        <div style={{ display:"flex",gap:10,alignItems:"flex-start" }}>
-                          <Avatar user={getUser(req.from_user_id)} size={38} />
-                          <div style={{ flex:1 }}>
-                            <div style={{ fontWeight:700,fontSize:14,color:"var(--text)" }}>{getUser(req.from_user_id)?.name}</div>
-                            <div style={{ fontSize:13,color:"var(--text2)",marginTop:2 }}>Requesting <strong>{req.qty}× {item?.name}</strong></div>
-                            {req.return_due_date && <div style={{ fontSize:12,color:BRAND.primary,marginTop:2 }}>📅 Wants to return by: <strong>{req.return_due_date}</strong></div>}
-                            {req.note && <div style={{ fontSize:12,color:"var(--text3)",fontStyle:"italic" }}>"{req.note}"</div>}
-                            <div style={{ fontSize:11,color:"var(--text4)",marginTop:4 }}>{req.date}</div>
-                          </div>
-                          <StatusBadge s={req.status} />
-                        </div>
-                        {req.status==="pending" && isTracked && (
-                          <div style={{ marginTop:12 }}>
-                            <div style={{ fontSize:12,fontWeight:600,color:"var(--text3)",marginBottom:8 }}>Select {req.qty} unit{req.qty>1?"s":""} ({chosen.length}/{req.qty} selected):</div>
-                            <div style={{ display:"flex",flexWrap:"wrap",gap:6,marginBottom:10 }}>
-                              {availableUnits.map(u => {
-                                const isChosen = chosen.includes(String(u.id));
-                                return (
-                                  <button key={u.id} onClick={() => toggleUnitSelection(req.id,String(u.id),req.qty)}
-                                    style={{ padding:"6px 12px",borderRadius:8,border:`2px solid ${isChosen?BRAND.primary:"var(--border)"}`,background:isChosen?BRAND.pale:"var(--surface2)",color:isChosen?BRAND.primary:"var(--text2)",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"monospace" }}>
-                                    {u.unit_code}
-                                  </button>
-                                );
-                              })}
-                              {availableUnits.length===0 && <div style={{ fontSize:13,color:"#ef4444",fontWeight:600 }}>No units available!</div>}
-                            </div>
-                            {/* Assistant can adjust the return date */}
-                            <label style={{ ...lbl,marginTop:8 }}>Return date (you can change this)</label>
-                            <input style={{ ...inp,marginBottom:10 }} type="date" min={today} value={form[`returnDate_${req.id}`]??req.return_due_date??""} onChange={e => setForm(f=>({...f,[`returnDate_${req.id}`]:e.target.value}))} />
-                            <div style={{ display:"flex",gap:8 }}>
-                              <button onClick={() => assignUnits(req)} disabled={chosen.length!==req.qty}
-                                style={{ flex:1,background:chosen.length===req.qty?BRAND.primary:"var(--border)",color:chosen.length===req.qty?"white":"var(--text4)",border:"none",borderRadius:8,padding:"9px",cursor:chosen.length===req.qty?"pointer":"not-allowed",fontWeight:700,fontSize:13 }}>
-                                ✓ Assign & Approve
-                              </button>
-                              <button onClick={() => rejectRequest(req)} style={{ flex:1,background:"#ef4444",color:"white",border:"none",borderRadius:8,padding:"9px",cursor:"pointer",fontWeight:700,fontSize:13 }}>✗ Reject</button>
+            {(() => {
+              // Group requests by group_id
+              const grouped = {};
+              requests.forEach(r => {
+                const key = r.group_id || `legacy_${r.id}`;
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(r);
+              });
+              const groupEntries = Object.entries(grouped);
+              // Sort: pending groups first, then by date desc
+              const statusOrder = { pending: 0, approved: 1, rejected: 2 };
+              groupEntries.sort((a, b) => {
+                const aStatus = a[1].some(r=>r.status==="pending") ? "pending" : a[1][0].status;
+                const bStatus = b[1].some(r=>r.status==="pending") ? "pending" : b[1][0].status;
+                if (statusOrder[aStatus] !== statusOrder[bStatus]) return statusOrder[aStatus] - statusOrder[bStatus];
+                return b[1][0].id - a[1][0].id;
+              });
+              // Render by status sections
+              return ["pending","approved","rejected"].map(status => {
+                const sectionGroups = groupEntries.filter(([,reqs]) => {
+                  if (status === "pending") return reqs.some(r=>r.status==="pending");
+                  if (status === "approved") return reqs.every(r=>r.status==="approved");
+                  return reqs.every(r=>r.status==="rejected");
+                });
+                if (!sectionGroups.length) return null;
+                return (
+                  <div key={status}>
+                    <SectionLabel label={status} />
+                    {sectionGroups.map(([gid, reqs]) => {
+                      const requester = getUser(reqs[0].from_user_id);
+                      return (
+                        <Card key={gid}>
+                          <div style={{ display:"flex",gap:10,alignItems:"flex-start",marginBottom:8 }}>
+                            <Avatar user={requester} size={38} />
+                            <div style={{ flex:1 }}>
+                              <div style={{ fontWeight:700,fontSize:14,color:"var(--text)" }}>{requester?.name}</div>
+                              <div style={{ fontSize:13,color:"var(--text2)",marginTop:2 }}>{reqs.length} item{reqs.length>1?"s":""} requested</div>
+                              {reqs[0].note && <div style={{ fontSize:12,color:"var(--text3)",fontStyle:"italic",marginTop:2 }}>"{reqs[0].note}"</div>}
+                              <div style={{ fontSize:11,color:"var(--text4)",marginTop:2 }}>{reqs[0].date}</div>
                             </div>
                           </div>
-                        )}
-                        {req.status==="pending" && !isTracked && (
-                          <div style={{ display:"flex",gap:8,marginTop:12 }}>
-                            <button onClick={async () => {
-                              const item = getItem(req.item_id);
-                              if (!item||item.available<req.qty) return showToast(`Only ${item?.available||0} available!`,"error");
-                              await supabase.from("requests").update({ status:"approved" }).eq("id",req.id);
-                              await supabase.from("inventory").update({ available:item.available-req.qty }).eq("id",req.item_id);
-                              const ex = assignments.find(x=>x.user_id===req.from_user_id&&x.item_id===req.item_id);
-                              if (ex) await supabase.from("assignments").update({ qty:ex.qty+req.qty }).eq("id",ex.id);
-                              else await supabase.from("assignments").insert({ item_id:req.item_id,user_id:req.from_user_id,qty:req.qty,assigned_at:today });
-                              await addLog("Approved",currentUser.name,`Approved ${req.qty}× ${item.name} for ${getUser(req.from_user_id)?.name}`);
-                              showToast("Request approved!");
-                            }} style={{ flex:1,background:"#10b981",color:"white",border:"none",borderRadius:8,padding:"9px",cursor:"pointer",fontWeight:700,fontSize:13 }}>✓ Approve</button>
-                            <button onClick={() => rejectRequest(req)} style={{ flex:1,background:"#ef4444",color:"white",border:"none",borderRadius:8,padding:"9px",cursor:"pointer",fontWeight:700,fontSize:13 }}>✗ Reject</button>
-                          </div>
-                        )}
-                        {req.status==="approved" && (() => {
-                          const assignedUAs = unitAssignments.filter(ua=>ua.user_id===req.from_user_id&&ua.status==="active");
-                          const reqUnits = assignedUAs.map(ua=>getUnit(ua.unit_id)).filter(u=>u?.item_id===req.item_id);
-                          if (!reqUnits.length) return null;
-                          return <div style={{ marginTop:8,display:"flex",flexWrap:"wrap",gap:6 }}>{reqUnits.map(u=><span key={u.id} style={{ background:BRAND.pale,color:BRAND.primary,borderRadius:99,padding:"2px 10px",fontSize:12,fontWeight:700,fontFamily:"monospace" }}>📱 {u.unit_code}</span>)}</div>;
-                        })()}
-                      </Card>
-                    );
-                  })}
-                </div>
-              );
-            })}
+                          {/* Per-item rows with individual approval */}
+                          {reqs.map(req => {
+                            const item = getItem(req.item_id);
+                            const isTracked = units.some(u=>u.item_id===req.item_id);
+                            const availableUnits = units.filter(u=>u.item_id===req.item_id&&u.status==="available");
+                            const chosen = selectedUnits[req.id] || [];
+                            return (
+                              <div key={req.id} style={{ padding:"10px 0",borderTop:"1px solid var(--border)" }}>
+                                <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:4 }}>
+                                  <div style={{ fontWeight:700,fontSize:14,color:"var(--text)",flex:1 }}>{req.qty}x {item?.name}</div>
+                                  <StatusBadge s={req.status} />
+                                </div>
+                                {req.return_due_date && <div style={{ fontSize:12,color:BRAND.primary,marginBottom:4 }}>📅 Return by: <strong>{req.return_due_date}</strong></div>}
+                                {/* Tracked item approval */}
+                                {req.status==="pending" && isTracked && (
+                                  <div style={{ marginTop:8 }}>
+                                    <div style={{ fontSize:12,fontWeight:600,color:"var(--text3)",marginBottom:6 }}>Select {req.qty} unit{req.qty>1?"s":""} ({chosen.length}/{req.qty}):</div>
+                                    <div style={{ display:"flex",flexWrap:"wrap",gap:6,marginBottom:8 }}>
+                                      {availableUnits.map(u => {
+                                        const isChosen = chosen.includes(String(u.id));
+                                        return (
+                                          <button key={u.id} onClick={() => toggleUnitSelection(req.id,String(u.id),req.qty)}
+                                            style={{ padding:"5px 10px",borderRadius:8,border:`2px solid ${isChosen?BRAND.primary:"var(--border)"}`,background:isChosen?BRAND.pale:"var(--surface2)",color:isChosen?BRAND.primary:"var(--text2)",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"monospace" }}>
+                                            {u.unit_code}
+                                          </button>
+                                        );
+                                      })}
+                                      {availableUnits.length===0 && <div style={{ fontSize:13,color:"#ef4444",fontWeight:600 }}>No units available!</div>}
+                                    </div>
+                                    <label style={{ ...lbl,marginTop:4 }}>Return date</label>
+                                    <input style={{ ...inp,marginBottom:8 }} type="date" min={today} value={form[`returnDate_${req.id}`]??req.return_due_date??""} onChange={e => setForm(f=>({...f,[`returnDate_${req.id}`]:e.target.value}))} />
+                                    <div style={{ display:"flex",gap:8 }}>
+                                      <button onClick={() => assignUnits(req)} disabled={chosen.length!==req.qty}
+                                        style={{ flex:1,background:chosen.length===req.qty?BRAND.primary:"var(--border)",color:chosen.length===req.qty?"white":"var(--text4)",border:"none",borderRadius:8,padding:"8px",cursor:chosen.length===req.qty?"pointer":"not-allowed",fontWeight:700,fontSize:12 }}>
+                                        ✓ Assign
+                                      </button>
+                                      <button onClick={() => rejectRequest(req)} style={{ flex:1,background:"#ef4444",color:"white",border:"none",borderRadius:8,padding:"8px",cursor:"pointer",fontWeight:700,fontSize:12 }}>✗ Reject</button>
+                                    </div>
+                                  </div>
+                                )}
+                                {/* Untracked item approval */}
+                                {req.status==="pending" && !isTracked && (
+                                  <div style={{ display:"flex",gap:8,marginTop:8 }}>
+                                    <button onClick={async () => {
+                                      const item = getItem(req.item_id);
+                                      if (!item||item.available<req.qty) return showToast(`Only ${item?.available||0} available!`,"error");
+                                      await supabase.from("requests").update({ status:"approved" }).eq("id",req.id);
+                                      await supabase.from("inventory").update({ available:item.available-req.qty }).eq("id",req.item_id);
+                                      const ex = assignments.find(x=>x.user_id===req.from_user_id&&x.item_id===req.item_id);
+                                      if (ex) await supabase.from("assignments").update({ qty:ex.qty+req.qty }).eq("id",ex.id);
+                                      else await supabase.from("assignments").insert({ item_id:req.item_id,user_id:req.from_user_id,qty:req.qty,assigned_at:today });
+                                      await addLog("Approved",currentUser.name,`Approved ${req.qty}× ${item.name} for ${getUser(req.from_user_id)?.name}`);
+                                      const requester = getUser(req.from_user_id);
+                                      if (requester?.email) {
+                                        sendNotificationEmail([requester.email], `Request Approved: ${item?.name}`, buildApprovalEmail(requester.name, item?.name, req.qty, null));
+                                      }
+                                      showToast("Request approved!");
+                                    }} style={{ flex:1,background:"#10b981",color:"white",border:"none",borderRadius:8,padding:"8px",cursor:"pointer",fontWeight:700,fontSize:12 }}>✓ Approve</button>
+                                    <button onClick={() => rejectRequest(req)} style={{ flex:1,background:"#ef4444",color:"white",border:"none",borderRadius:8,padding:"8px",cursor:"pointer",fontWeight:700,fontSize:12 }}>✗ Reject</button>
+                                  </div>
+                                )}
+                                {/* Approved: show assigned units */}
+                                {req.status==="approved" && (() => {
+                                  const assignedUAs = unitAssignments.filter(ua=>ua.user_id===req.from_user_id&&ua.status==="active");
+                                  const reqUnits = assignedUAs.map(ua=>getUnit(ua.unit_id)).filter(u=>u?.item_id===req.item_id);
+                                  if (!reqUnits.length) return null;
+                                  return <div style={{ marginTop:6,display:"flex",flexWrap:"wrap",gap:4 }}>{reqUnits.map(u=><span key={u.id} style={{ background:BRAND.pale,color:BRAND.primary,borderRadius:99,padding:"2px 8px",fontSize:11,fontWeight:700,fontFamily:"monospace" }}>📱 {u.unit_code}</span>)}</div>;
+                                })()}
+                              </div>
+                            );
+                          })}
+                        </Card>
+                      );
+                    })}
+                  </div>
+                );
+              });
+            })()}
           </div>
         )}
 
@@ -1249,33 +1366,52 @@ export default function App() {
         {tab==="request" && isStaff && (
           <div>
             <h2 style={{ fontWeight:800,color:"var(--text)",marginBottom:8,fontSize:20 }}>Request Items</h2>
-            <p style={{ color:"var(--text3)",fontSize:13,marginBottom:16 }}>Submit a request and your inventory assistant will assign a unit to you.</p>
-            <button onClick={() => { setModal("request"); setForm({}); }} style={{ ...btn,marginTop:0,marginBottom:20 }}>+ New Request</button>
-            {requests.filter(r=>r.from_user_id===currentUser.id).length > 0 && <>
-              <h3 style={{ fontWeight:700,fontSize:15,color:"var(--text2)",marginBottom:10 }}>My Requests</h3>
-              {requests.filter(r=>r.from_user_id===currentUser.id).map(req => {
-                const assignedUAs = unitAssignments.filter(ua=>ua.user_id===req.from_user_id&&ua.status==="active");
-                const reqUnits = assignedUAs.map(ua=>getUnit(ua.unit_id)).filter(u=>u?.item_id===req.item_id);
-                return (
-                  <Card key={req.id}>
-                    <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start" }}>
-                      <div>
-                        <div style={{ fontWeight:700,fontSize:14,color:"var(--text)" }}>{req.qty}× {getItem(req.item_id)?.name}</div>
-                        {req.return_due_date && <div style={{ fontSize:12,color:BRAND.primary,marginTop:2 }}>📅 Return by: {req.return_due_date}</div>}
-                        {reqUnits.length > 0 && (
-                          <div style={{ display:"flex",flexWrap:"wrap",gap:4,marginTop:6 }}>
-                            {reqUnits.map(u=><span key={u.id} style={{ background:BRAND.pale,color:BRAND.primary,borderRadius:99,padding:"2px 8px",fontSize:12,fontWeight:800,fontFamily:"monospace" }}>📱 {u.unit_code}</span>)}
-                          </div>
-                        )}
-                        {req.note&&<div style={{ fontSize:12,color:"var(--text3)",fontStyle:"italic",marginTop:4 }}>"{req.note}"</div>}
-                        <div style={{ fontSize:11,color:"var(--text4)",marginTop:4 }}>{req.date}</div>
+            <p style={{ color:"var(--text3)",fontSize:13,marginBottom:16 }}>Submit a request and your inventory assistant will assign items to you.</p>
+            <button onClick={() => { setModal("request"); setForm({}); setCart([]); }} style={{ ...btn,marginTop:0,marginBottom:20 }}>+ New Request</button>
+            {(() => {
+              const myReqs = requests.filter(r=>r.from_user_id===currentUser.id);
+              if (!myReqs.length) return null;
+              // Group by group_id (null = legacy single requests)
+              const groups = {};
+              myReqs.forEach(r => {
+                const key = r.group_id || `legacy_${r.id}`;
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(r);
+              });
+              return <>
+                <h3 style={{ fontWeight:700,fontSize:15,color:"var(--text2)",marginBottom:10 }}>My Requests</h3>
+                {Object.entries(groups).map(([gid, reqs]) => {
+                  const groupStatus = reqs.some(r=>r.status==="pending") ? "pending" : reqs.every(r=>r.status==="approved") ? "approved" : reqs.every(r=>r.status==="rejected") ? "rejected" : "partial";
+                  return (
+                    <Card key={gid}>
+                      <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8 }}>
+                        <div style={{ fontSize:11,color:"var(--text4)" }}>{reqs[0].date}</div>
+                        <StatusBadge s={groupStatus} />
                       </div>
-                      <StatusBadge s={req.status} />
-                    </div>
-                  </Card>
-                );
-              })}
-            </>}
+                      {reqs.map(req => {
+                        const assignedUAs = unitAssignments.filter(ua=>ua.user_id===req.from_user_id&&ua.status==="active");
+                        const reqUnits = assignedUAs.map(ua=>getUnit(ua.unit_id)).filter(u=>u?.item_id===req.item_id);
+                        return (
+                          <div key={req.id} style={{ padding:"6px 0",borderBottom:"1px solid var(--border)" }}>
+                            <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                              <div style={{ fontWeight:700,fontSize:14,color:"var(--text)",flex:1 }}>{req.qty}x {getItem(req.item_id)?.name}</div>
+                              {reqs.length > 1 && <StatusBadge s={req.status} />}
+                            </div>
+                            {req.return_due_date && <div style={{ fontSize:12,color:BRAND.primary,marginTop:2 }}>📅 Return by: {req.return_due_date}</div>}
+                            {reqUnits.length > 0 && (
+                              <div style={{ display:"flex",flexWrap:"wrap",gap:4,marginTop:4 }}>
+                                {reqUnits.map(u=><span key={u.id} style={{ background:BRAND.pale,color:BRAND.primary,borderRadius:99,padding:"2px 8px",fontSize:12,fontWeight:800,fontFamily:"monospace" }}>📱 {u.unit_code}</span>)}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {reqs[0].note && <div style={{ fontSize:12,color:"var(--text3)",fontStyle:"italic",marginTop:8 }}>"{reqs[0].note}"</div>}
+                    </Card>
+                  );
+                })}
+              </>;
+            })()}
           </div>
         )}
 
@@ -1484,26 +1620,53 @@ export default function App() {
               }} style={btn}>Confirm Return</button>
             </>}
 
-            {/* REQUEST ITEM */}
+            {/* REQUEST ITEMS (CART) */}
             {modal==="request"&&<>
-              <h3 style={{ margin:"0 0 4px",fontWeight:800,fontSize:18,color:"var(--text)" }}>Request Item</h3>
-              <p style={{ color:"var(--text3)",fontSize:13,margin:"0 0 12px" }}>Your inventory assistant will assign the specific units to you.</p>
-              <label style={lbl}>Item</label>
-              <select style={inp} value={form.itemId||""} onChange={e => setForm(f=>({...f,itemId:e.target.value}))}>
-                <option value="">Choose an item...</option>
-                {inventory.map(i => {
-                  const available = units.some(u=>u.item_id===i.id) ? units.filter(u=>u.item_id===i.id&&u.status==="available").length : i.available;
-                  return <option key={i.id} value={i.id}>{i.name} — {available} available</option>;
-                })}
-              </select>
-              <label style={lbl}>Quantity needed</label>
-              <input style={inp} type="number" min={1} value={form.qty||""} onChange={e => setForm(f=>({...f,qty:e.target.value}))} placeholder="e.g. 1" />
-              <label style={lbl}>Expected return date (optional)</label>
-              <input style={inp} type="date" min={today} value={form.returnDate||""} onChange={e => setForm(f=>({...f,returnDate:e.target.value}))} />
-              <div style={{ fontSize:11,color:"var(--text4)",marginTop:4 }}>Leave blank if you need it indefinitely. The assistant may set or change this.</div>
-              <label style={lbl}>Reason (optional)</label>
+              <h3 style={{ margin:"0 0 4px",fontWeight:800,fontSize:18,color:"var(--text)" }}>Request Items</h3>
+              <p style={{ color:"var(--text3)",fontSize:13,margin:"0 0 12px" }}>Add items to your request. Your inventory assistant will review and assign them.</p>
+
+              {/* Cart items list */}
+              {cart.length > 0 && (
+                <div style={{ marginBottom:16 }}>
+                  {cart.map((c, idx) => {
+                    const item = getItem(Number(c.itemId));
+                    return (
+                      <div key={idx} style={{ display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"var(--surface2)",borderRadius:8,marginBottom:6 }}>
+                        <div style={{ flex:1 }}>
+                          <div style={{ fontWeight:700,fontSize:13,color:"var(--text)" }}>{c.qty}x {item?.name}</div>
+                          {c.returnDate && <div style={{ fontSize:11,color:BRAND.primary }}>Return by: {c.returnDate}</div>}
+                        </div>
+                        <button onClick={() => setCart(cart.filter((_,i)=>i!==idx))} style={{ background:"#fee2e2",color:"#ef4444",border:"none",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer",fontWeight:700 }}>Remove</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Add item form */}
+              <div style={{ background:"var(--surface2)",borderRadius:10,padding:12,marginBottom:12 }}>
+                <label style={{ ...lbl,marginTop:0 }}>Item</label>
+                <select style={inp} value={form.cartItemId||""} onChange={e => setForm(f=>({...f,cartItemId:e.target.value}))}>
+                  <option value="">Choose an item...</option>
+                  {inventory.map(i => {
+                    const available = units.some(u=>u.item_id===i.id) ? units.filter(u=>u.item_id===i.id&&u.status==="available").length : i.available;
+                    return <option key={i.id} value={i.id}>{i.name} — {available} available</option>;
+                  })}
+                </select>
+                <label style={lbl}>Quantity</label>
+                <input style={inp} type="number" min={1} value={form.cartQty||""} onChange={e => setForm(f=>({...f,cartQty:e.target.value}))} placeholder="e.g. 1" />
+                <label style={lbl}>Return date (optional)</label>
+                <input style={inp} type="date" min={today} value={form.cartReturnDate||""} onChange={e => setForm(f=>({...f,cartReturnDate:e.target.value}))} />
+                <button onClick={() => {
+                  if (!form.cartItemId || !form.cartQty || Number(form.cartQty) < 1) return showToast("Select item and quantity","error");
+                  setCart([...cart, { itemId: form.cartItemId, qty: form.cartQty, returnDate: form.cartReturnDate || "" }]);
+                  setForm(f => ({ ...f, cartItemId: "", cartQty: "", cartReturnDate: "" }));
+                }} style={{ background:BRAND.pale,color:BRAND.dark,border:"none",borderRadius:8,padding:"8px 14px",fontSize:13,cursor:"pointer",fontWeight:700,marginTop:10,width:"100%" }}>+ Add to Request</button>
+              </div>
+
+              <label style={lbl}>Reason / Note (optional)</label>
               <input style={inp} value={form.note||""} onChange={e => setForm(f=>({...f,note:e.target.value}))} placeholder="e.g. For warehouse team" />
-              <button onClick={submitRequest} disabled={saving||!form.itemId||!form.qty} style={{ ...btn,opacity:(saving||!form.itemId||!form.qty)?0.5:1 }}>{saving?"Submitting...":"Submit Request"}</button>
+              <button onClick={submitRequest} disabled={saving||cart.length===0} style={{ ...btn,opacity:(saving||cart.length===0)?0.5:1 }}>{saving?"Submitting...":`Submit Request (${cart.length} item${cart.length!==1?"s":""})`}</button>
             </>}
 
             {/* GENERATE UNITS */}
