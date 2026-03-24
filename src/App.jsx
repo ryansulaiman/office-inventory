@@ -400,21 +400,27 @@ export default function App() {
   };
 
   const submitAddUser = async () => {
-    const { name, role, pin } = form;
+    const { name, role, email, password } = form;
     if (!name) return showToast("Name is required","error");
-    if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) return showToast("PIN must be exactly 4 digits","error");
+    if (!email || !email.includes("@")) return showToast("Valid email is required","error");
+    if (!password || password.length < 4) return showToast("Password must be at least 4 characters","error");
+    if (users.find(u => u.email === email)) return showToast("Email already in use","error");
     const initials = name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
     const colors = [BRAND.primary,"#ec4899","#f59e0b","#10b981","#3b82f6","#ef4444","#8b5cf6","#14b8a6","#f97316","#06b6d4"];
-    await supabase.from("users").insert({ name, role:role||"staff", avatar:initials, color:colors[users.length%colors.length], pin });
+    await supabase.from("users").insert({ name, role:role||"staff", avatar:initials, color:colors[users.length%colors.length], email, password, pin:"0000" });
     await addLog("User Added", currentUser.name, `Added ${name} as ${role||"staff"}`);
     setModal(null); setForm({}); showToast("User added!");
   };
 
-  const submitChangePin = async () => {
-    const { targetUserId, newPin } = form;
-    if (!newPin || newPin.length !== 4 || !/^\d{4}$/.test(newPin)) return showToast("PIN must be exactly 4 digits","error");
-    await supabase.from("users").update({ pin:newPin }).eq("id", Number(targetUserId));
-    setModal(null); setForm({}); showToast("PIN updated!");
+  const submitChangePassword = async () => {
+    const { targetUserId, newEmail, newPassword } = form;
+    if (newEmail && !newEmail.includes("@")) return showToast("Valid email is required","error");
+    if (newEmail && users.find(u => u.email === newEmail && u.id !== Number(targetUserId))) return showToast("Email already in use","error");
+    if (!newPassword || newPassword.length < 4) return showToast("Password must be at least 4 characters","error");
+    const updates = { password: newPassword };
+    if (newEmail) updates.email = newEmail;
+    await supabase.from("users").update(updates).eq("id", Number(targetUserId));
+    setModal(null); setForm({}); showToast("Credentials updated!");
   };
 
   const submitChangeRole = async () => {
@@ -1010,6 +1016,7 @@ export default function App() {
                         <div style={{ fontWeight:700,fontSize:15,color:"var(--text)" }}>{u.name}</div>
                         <RoleBadge role={u.role} />
                       </div>
+                      {u.email && <div style={{ fontSize:12,color:"var(--text3)",marginBottom:4 }}>✉️ {u.email}</div>}
                       {theirUnitAs.length > 0 && (
                         <div style={{ display:"flex",flexWrap:"wrap",gap:4,marginTop:6 }}>
                           {theirUnitAs.map(ua => {
@@ -1031,7 +1038,7 @@ export default function App() {
                           style={{ background:"#fef3c7",color:"#92400e",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>↩ Return All</button>
                       )}
                       <button onClick={() => { setModal("changeRole"); setForm({ targetUserId:String(u.id),targetName:u.name,newRole:u.role }); }} style={{ background:BRAND.pale,color:BRAND.dark,border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>✏️ Role</button>
-                      <button onClick={() => { setModal("changePin"); setForm({ targetUserId:String(u.id),targetName:u.name }); }} style={{ background:"#fef3c7",color:"#92400e",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>🔑 PIN</button>
+                      <button onClick={() => { setModal("changePassword"); setForm({ targetUserId:String(u.id),targetName:u.name,newEmail:u.email||"" }); }} style={{ background:"#fef3c7",color:"#92400e",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>🔑 Password</button>
                       {u.role!=="admin"&&<button onClick={() => setConfirmAction({ type:"removeUser",uid:u.id,name:u.name })} style={{ background:"#fee2e2",color:"#ef4444",border:"none",borderRadius:8,padding:"6px 10px",fontSize:11,cursor:"pointer",fontWeight:700 }}>Remove</button>}
                     </div>
                   </div>
@@ -1505,14 +1512,16 @@ export default function App() {
               <h3 style={{ margin:"0 0 4px",fontWeight:800,fontSize:18,color:"var(--text)" }}>Add Team Member</h3>
               <label style={lbl}>Full Name *</label>
               <input style={inp} value={form.name||""} onChange={e => setForm(f=>({...f,name:e.target.value}))} placeholder="e.g. Jose Rizal" />
+              <label style={lbl}>Work Email *</label>
+              <input style={inp} type="email" value={form.email||""} onChange={e => setForm(f=>({...f,email:e.target.value}))} placeholder="name@company.com" />
+              <label style={lbl}>Password *</label>
+              <input style={inp} type="password" value={form.password||""} onChange={e => setForm(f=>({...f,password:e.target.value}))} placeholder="••••••••" />
               <label style={lbl}>Role</label>
               <select style={inp} value={form.role||"staff"} onChange={e => setForm(f=>({...f,role:e.target.value}))}>
                 <option value="staff">Staff</option>
                 <option value="inventory_assistant">Inventory Assistant</option>
                 <option value="admin">Admin</option>
               </select>
-              <label style={lbl}>PIN (4 digits) *</label>
-              <input style={inp} type="password" inputMode="numeric" maxLength={4} value={form.pin||""} onChange={e => setForm(f=>({...f,pin:e.target.value.replace(/\D/g,"").slice(0,4)}))} placeholder="••••" />
               <button onClick={submitAddUser} style={btn}>Add Member</button>
             </>}
 
@@ -1529,13 +1538,15 @@ export default function App() {
               <button onClick={submitChangeRole} style={btn}>Save Role</button>
             </>}
 
-            {/* CHANGE PIN */}
-            {modal==="changePin"&&<>
-              <h3 style={{ margin:"0 0 4px",fontWeight:800,fontSize:18,color:"var(--text)" }}>Change PIN</h3>
-              <p style={{ color:"var(--text4)",fontSize:13,margin:"0 0 8px" }}>Set a new 4-digit PIN for <strong>{form.targetName}</strong>.</p>
-              <label style={lbl}>New PIN (4 digits)</label>
-              <input style={inp} type="password" inputMode="numeric" maxLength={4} value={form.newPin||""} onChange={e => setForm(f=>({...f,newPin:e.target.value.replace(/\D/g,"").slice(0,4)}))} placeholder="••••" />
-              <button onClick={submitChangePin} style={btn}>Save New PIN</button>
+            {/* CHANGE PASSWORD */}
+            {modal==="changePassword"&&<>
+              <h3 style={{ margin:"0 0 4px",fontWeight:800,fontSize:18,color:"var(--text)" }}>Update Credentials</h3>
+              <p style={{ color:"var(--text4)",fontSize:13,margin:"0 0 8px" }}>Update login details for <strong>{form.targetName}</strong>.</p>
+              <label style={lbl}>Email</label>
+              <input style={inp} type="email" value={form.newEmail||""} onChange={e => setForm(f=>({...f,newEmail:e.target.value}))} placeholder="name@company.com" />
+              <label style={lbl}>New Password *</label>
+              <input style={inp} type="password" value={form.newPassword||""} onChange={e => setForm(f=>({...f,newPassword:e.target.value}))} placeholder="••••••••" />
+              <button onClick={submitChangePassword} style={btn}>Save Credentials</button>
             </>}
 
           </div>
